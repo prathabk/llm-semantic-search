@@ -1,0 +1,232 @@
+/* Slide Carousel Styles */
+
+.carousel-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.carousel-wrapper {
+    display: flex;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide {
+    min-width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.slide-content {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Navigation Controls */
+.carousel-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+}
+
+.carousel-nav button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9375em;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.carousel-nav button:hover:not(:disabled) {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.carousel-nav button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.carousel-nav .nav-center {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Slide Indicators */
+.slide-indicators {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.slide-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.slide-indicator.active {
+    background: var(--primary);
+    width: 24px;
+    border-radius: 4px;
+}
+
+.slide-indicator:hover {
+    background: var(--text-secondary);
+}
+
+.slide-counter {
+    font-size: 0.875em;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin: 0 8px;
+}
+
+/* Slide Title Area */
+.slide-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.slide-header h2 {
+    color: var(--text);
+    font-size: 2em;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.025em;
+}
+
+.slide-header .slide-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.125em;
+}
+
+/* Progress Bar */
+.progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 2px;
+}
+
+/* Keyboard shortcut hint */
+.keyboard-hint {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.8125em;
+    color: var(--text-secondary);
+    box-shadow: 0 4px 6px var(--shadow);
+    opacity: 0;
+    animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; }
+    10%, 90% { opacity: 1; }
+}
+
+.keyboard-hint kbd {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 0.875em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .carousel-nav {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .carousel-nav button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .carousel-nav .nav-center {
+        order: -1;
+    }
+
+    .keyboard-hint {
+        display: none;
+    }
+}
+
+/* Slide-specific content adjustments */
+.slide canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+.slide .interactive-section {
+    margin: 24px 0;
+}
+
+.slide .example-box {
+    margin: 20px 0;
+}
+
+/* Fade animation for slide content */
+.slide {
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.slide.inactive {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Full screen mode toggle */
+.fullscreen-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.2em;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px var(--shadow);
+}
+
+.fullscreen-toggle:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}

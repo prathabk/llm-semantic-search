@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Vectors - Semantic Search Course</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/carousel.css') }}">
+    <style>
+        canvas {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            display: block;
+            margin: 20px auto;
+            box-shadow: 0 1px 3px var(--shadow);
+        }
+
+        .interactive-section {
+            background: var(--bg);
+            padding: 32px;
+            border-radius: 8px;
+            margin: 24px 0;
+            border: 1px solid var(--border);
+        }
+
+        .controls {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: 500;
+            font-size: 0.875em;
+            color: var(--text);
+        }
+
+        .control-group input[type="range"] {
+            width: 140px;
+        }
+
+        .control-group span {
+            font-size: 0.875em;
+            color: var(--text-secondary);
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+        }
+
+        .vector-math {
+            background: var(--surface);
+            padding: 16px;
+            border-left: 3px solid var(--primary);
+            margin: 16px 0;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.9375em;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px var(--shadow);
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .example-box {
+            background: var(--bg);
+            padding: 24px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+        }
+
+        .example-box h3, .example-box h4 {
+            margin-top: 0;
+        }
+
+        button.action-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9375em;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        button.action-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .dimension-viz {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 32px 0;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .dim-example {
+            text-align: center;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            min-width: 160px;
+        }
+
+        .dim-example strong {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .dim-example em {
+            color: var(--text-secondary);
+            font-size: 0.875em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table th, table td {
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            text-align: left;
+        }
+
+        table th {
+            background: var(--text);
+            color: white;
+            font-weight: 600;
+            font-size: 0.9375em;
+        }
+
+        table tr:nth-child(even) {
+            background: var(--bg);
+        }
+
+        .content ul {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        .content ul li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .content p {
+            margin: 12px 0;
+        }
+
+        .title-slide {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .title-slide h1 {
+            font-size: 3em;
+            margin-bottom: 16px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .title-slide .course-info {
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 1.125em;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="home-link">← Back to Home</a>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="carousel-container">
+            <div class="carousel-wrapper" id="carouselWrapper">
+
+                <!-- Slide 1: Title -->
+                <div class="slide">
+                    <div class="slide-content title-slide">
+                        <h1>📊 Understanding Vectors</h1>
+                        <p class="subtitle">The Foundation of Semantic Search</p>
+                        <div class="course-info">
+                            <p>Welcome to the first concept in our semantic search journey. Vectors are mathematical objects that allow us to represent and compare information numerically.</p>
+                            <p style="margin-top: 24px; color: var(--text-secondary);">Use arrow keys or buttons below to navigate</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: What is a Vector? -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>What is a Vector?</h2>
+                            <p class="slide-subtitle">Magnitude and Direction</p>
+                        </div>
+
+                        <p>A <strong>vector</strong> is a mathematical object that has both <span class="highlight">magnitude</span> (size) and <span class="highlight">direction</span>. In the context of semantic search and machine learning, vectors are used to represent data in a numerical format that computers can process and compare.</p>
+
+                        <div class="example-box">
+                            <h3>Real-World Analogy</h3>
+                            <p>Think of a vector like giving directions: "Walk 5 meters north" - the <strong>5 meters</strong> is the magnitude, and <strong>north</strong> is the direction. In 2D space, you might say "Walk 3 meters east and 4 meters north" - this can be represented as the vector [3, 4].</p>
+                        </div>
+
+                        <div class="vector-math">
+                            Vector v = [x, y]<br>
+                            Example: v = [3, 4]<br>
+                            Magnitude = √(x² + y²) = √(3² + 4²) = 5
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Interactive 2D Vector -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Visualizing Vectors in 2D Space</h2>
+                            <p class="slide-subtitle">Interactive Demonstration</p>
+                        </div>
+
+                        <div class="interactive-section">
+                            <p style="text-align: center; margin-bottom: 10px;">
+                                <strong>Interactive Demo:</strong> Adjust the vector components and see how it changes!
+                            </p>
+
+                            <canvas id="canvas2D" width="600" height="400"></canvas>
+
+                            <div class="controls">
+                                <div class="control-group">
+                                    <label for="x1">X Component:</label>
+                                    <input type="range" id="x1" min="-5" max="5" value="3" step="0.5">
+                                    <span id="x1-value">3</span>
+                                </div>
+                                <div class="control-group">
+                                    <label for="y1">Y Component:</label>
+                                    <input type="range" id="y1" min="-5" max="5" value="4" step="0.5">
+                                    <span id="y1-value">4</span>
+                                </div>
+                            </div>
+
+                            <div class="vector-math">
+                                Vector v = [<span id="vec-x">3</span>, <span id="vec-y">4</span>]<br>
+                                Magnitude = √(x² + y²) = <span id="magnitude">5.00</span><br>
+                                Direction = arctan(y/x) = <span id="angle">53.13</span>°
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Vector Addition -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Vector Addition</h2>
+                            <p class="slide-subtitle">Combining Vectors</p>
+                        </div>
+
+                        <p>Adding two vectors means adding their corresponding components. This is like following one set of directions, then following another set from where you ended up.</p>
+
+                        <div class="interactive-section">
+                            <canvas id="canvasAdd" width="600" height="400"></canvas>
+
+                            <div class="controls">
+                                <div class="control-group">
+                                    <label>Vector A (Red):</label>
+                                    <input type="range" id="xa" min="-4" max="4" value="2" step="0.5">
+                                    <input type="range" id="ya" min="-4" max="4" value="3" step="0.5">
+                                </div>
+                                <div class="control-group">
+                                    <label>Vector B (Green):</label>
+                                    <input type="range" id="xb" min="-4" max="4" value="1" step="0.5">
+                                    <input type="range" id="yb" min="-4" max="4" value="-2" step="0.5">
+                                </div>
+                            </div>
+
+                            <div class="vector-math">
+                                A = [<span id="va-x">2</span>, <span id="va-y">3</span>]<br>
+                                B = [<span id="vb-x">1</span>, <span id="vb-y">-2</span>]<br>
+                                A + B = [<span id="sum-x">3</span>, <span id="sum-y">1</span>]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Scalar Multiplication -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Scalar Multiplication</h2>
+                            <p class="slide-subtitle">Scaling Vector Magnitude</p>
+                        </div>
+
+                        <p>Multiplying a vector by a scalar (a single number) scales the vector's magnitude while keeping its direction the same (or reversing it if the scalar is negative).</p>
+
+                        <div class="interactive-section">
+                            <canvas id="canvasScale" width="600" height="400"></canvas>
+
+                            <div class="controls">
+                                <div class="control-group">
+                                    <label for="scalar">Scalar Multiplier:</label>
+                                    <input type="range" id="scalar" min="-3" max="3" value="1.5" step="0.1">
+                                    <span id="scalar-value">1.5</span>
+                                </div>
+                            </div>
+
+                            <div class="vector-math">
+                                Original Vector = [2, 3]<br>
+                                Scalar = <span id="scalar-num">1.5</span><br>
+                                Result = [<span id="scaled-x">3.0</span>, <span id="scaled-y">4.5</span>]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Dot Product -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Dot Product (Similarity Measure)</h2>
+                            <p class="slide-subtitle">Measuring Vector Similarity</p>
+                        </div>
+
+                        <p>The dot product is crucial for semantic search! It measures how similar two vectors are. A higher dot product means the vectors point in more similar directions.</p>
+
+                        <div class="example-box">
+                            <h4>Computing Dot Product:</h4>
+                            <p>For vectors A = [a₁, a₂] and B = [b₁, b₂]:</p>
+                            <div class="vector-math">
+                                A · B = (a₁ × b₁) + (a₂ × b₂)
+                            </div>
+                            <p>Example: [3, 4] · [1, 2] = (3 × 1) + (4 × 2) = 3 + 8 = 11</p>
+                        </div>
+
+                        <div class="interactive-section">
+                            <canvas id="canvasDot" width="600" height="400"></canvas>
+
+                            <div class="controls">
+                                <button class="action-btn" onclick="rotateVectorB()">Rotate Vector B</button>
+                            </div>
+
+                            <div class="vector-math">
+                                Vector A (Red) = [3, 2]<br>
+                                Vector B (Green) = [<span id="dot-bx">2</span>, <span id="dot-by">3</span>]<br>
+                                Dot Product A · B = <span id="dot-product">12</span><br>
+                                Cosine Similarity = <span id="cos-sim">0.99</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Dimensions -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Dimensions: From 2D to High-Dimensional Spaces</h2>
+                            <p class="slide-subtitle">Scaling Beyond Visualization</p>
+                        </div>
+
+                        <p>In semantic search, we typically work with <strong>high-dimensional vectors</strong> (often 384, 768, or even 1536 dimensions!). While we can't visualize these, the mathematical principles remain the same.</p>
+
+                        <div class="dimension-viz">
+                            <div class="dim-example">
+                                <strong>1D Vector</strong><br>
+                                [5]<br>
+                                <em>A point on a line</em>
+                            </div>
+                            <div class="dim-example">
+                                <strong>2D Vector</strong><br>
+                                [3, 4]<br>
+                                <em>A point on a plane</em>
+                            </div>
+                            <div class="dim-example">
+                                <strong>3D Vector</strong><br>
+                                [2, 3, 1]<br>
+                                <em>A point in space</em>
+                            </div>
+                            <div class="dim-example">
+                                <strong>High-Dimensional</strong><br>
+                                [0.23, -0.45, 0.12, ...]<br>
+                                <em>768 dimensions for text!</em>
+                            </div>
+                        </div>
+
+                        <div class="example-box">
+                            <h3>Why So Many Dimensions?</h3>
+                            <p>Each dimension can represent a different semantic feature or concept. More dimensions allow us to capture more nuanced relationships between words and concepts.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Vectors in Semantic Search -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Vectors in Semantic Search</h2>
+                            <p class="slide-subtitle">Real-World Application</p>
+                        </div>
+
+                        <p>In semantic search, each word, sentence, or document is converted into a high-dimensional vector (called an <strong>embedding</strong>). Similar concepts end up close together in this vector space.</p>
+
+                        <div class="example-box">
+                            <h3>Example: Word Similarity</h3>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Word</th>
+                                        <th>Simplified 3D Vector</th>
+                                        <th>Semantic Meaning</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>King</td>
+                                        <td>[0.8, 0.2, 0.9]</td>
+                                        <td>Royalty, Male, Power</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Queen</td>
+                                        <td>[0.8, -0.7, 0.9]</td>
+                                        <td>Royalty, Female, Power</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Man</td>
+                                        <td>[0.1, 0.3, 0.2]</td>
+                                        <td>Common, Male, Neutral</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Woman</td>
+                                        <td>[0.1, -0.6, 0.2]</td>
+                                        <td>Common, Female, Neutral</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top: 16px;">Notice how "King" and "Queen" have similar first and third components (royalty, power) but different second components (gender). This is how vectors capture semantic relationships!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 9: Key Takeaways -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Key Takeaways</h2>
+                            <p class="slide-subtitle">Summary</p>
+                        </div>
+
+                        <ul style="font-size: 1.125em; line-height: 2;">
+                            <li>Vectors are mathematical objects with <strong>magnitude</strong> and <strong>direction</strong></li>
+                            <li>We can perform operations like <strong>addition</strong>, <strong>scaling</strong>, and <strong>dot products</strong> on vectors</li>
+                            <li>The <strong>dot product</strong> measures similarity between vectors</li>
+                            <li>High-dimensional vectors can represent complex concepts like words and sentences</li>
+                            <li>Similar concepts have vectors that point in similar directions in vector space</li>
+                            <li>These principles form the foundation for <strong>semantic search</strong></li>
+                        </ul>
+
+                        <div style="text-align: center; margin-top: 60px;">
+                            <a href="/embeddings" style="text-decoration: none;">
+                                <button class="action-btn" style="padding: 16px 32px; font-size: 1.125em;">Next: Understanding Embeddings →</button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Navigation Controls -->
+        <div class="carousel-nav">
+            <button id="prevBtn" onclick="prevSlide()">
+                ← Previous
+            </button>
+
+            <div class="nav-center">
+                <div class="slide-indicators" id="slideIndicators"></div>
+                <span class="slide-counter">
+                    <span id="currentSlide">1</span> / <span id="totalSlides">9</span>
+                </span>
+            </div>
+
+            <button id="nextBtn" onclick="nextSlide()">
+                Next →
+            </button>
+        </div>
+    </div>
+
+    <div class="keyboard-hint" id="keyboardHint">
+        Use <kbd>←</kbd> <kbd>→</kbd> arrow keys to navigate
+    </div>
+
+    <script>
+        // Carousel State
+        let currentSlide = 0;
+        const totalSlides = 9;
+        const carouselWrapper = document.getElementById('carouselWrapper');
+        const progressFill = document.getElementById('progressFill');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        // Initialize
+        function initCarousel() {
+            updateSlide();
+            createIndicators();
+            setTimeout(() => {
+                document.getElementById('keyboardHint').style.animation = 'fadeInOut 3s ease-in-out';
+            }, 1000);
+        }
+
+        // Navigation Functions
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlide();
+        }
+
+        function updateSlide() {
+            const offset = -currentSlide * 100;
+            carouselWrapper.style.transform = `translateX(${offset}%)`;
+
+            // Update progress bar
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressFill.style.width = `${progress}%`;
+
+            // Update counter
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+
+            // Update buttons
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+
+            // Update indicators
+            updateIndicators();
+
+            // Reinitialize interactive elements if needed
+            setTimeout(() => {
+                if (currentSlide === 2) draw2DVector();
+                if (currentSlide === 3) drawVectorAddition();
+                if (currentSlide === 4) drawScalarMultiplication();
+                if (currentSlide === 5) drawDotProduct();
+            }, 100);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('slideIndicators');
+            for (let i = 0; i < totalSlides; i++) {
+                const indicator = document.createElement('div');
+                indicator.className = 'slide-indicator';
+                indicator.onclick = () => goToSlide(i);
+                container.appendChild(indicator);
+            }
+            updateIndicators();
+        }
+
+        function updateIndicators() {
+            const indicators = document.querySelectorAll('.slide-indicator');
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // 2D Vector Visualization
+        const canvas2D = document.getElementById('canvas2D');
+        const ctx2D = canvas2D.getContext('2d');
+        const x1Input = document.getElementById('x1');
+        const y1Input = document.getElementById('y1');
+
+        function draw2DVector() {
+            const x = parseFloat(x1Input.value);
+            const y = parseFloat(y1Input.value);
+
+            ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
+
+            // Draw grid
+            ctx2D.strokeStyle = '#e2e8f0';
+            ctx2D.lineWidth = 1;
+            for (let i = 0; i <= 600; i += 50) {
+                ctx2D.beginPath();
+                ctx2D.moveTo(i, 0);
+                ctx2D.lineTo(i, 400);
+                ctx2D.stroke();
+            }
+            for (let i = 0; i <= 400; i += 50) {
+                ctx2D.beginPath();
+                ctx2D.moveTo(0, i);
+                ctx2D.lineTo(600, i);
+                ctx2D.stroke();
+            }
+
+            // Draw axes
+            ctx2D.strokeStyle = '#64748b';
+            ctx2D.lineWidth = 2;
+            ctx2D.beginPath();
+            ctx2D.moveTo(0, 200);
+            ctx2D.lineTo(600, 200);
+            ctx2D.stroke();
+            ctx2D.beginPath();
+            ctx2D.moveTo(300, 0);
+            ctx2D.lineTo(300, 400);
+            ctx2D.stroke();
+
+            // Draw vector
+            const scale = 50;
+            const endX = 300 + x * scale;
+            const endY = 200 - y * scale;
+
+            ctx2D.strokeStyle = '#2563eb';
+            ctx2D.fillStyle = '#2563eb';
+            ctx2D.lineWidth = 3;
+
+            // Arrow line
+            ctx2D.beginPath();
+            ctx2D.moveTo(300, 200);
+            ctx2D.lineTo(endX, endY);
+            ctx2D.stroke();
+
+            // Arrow head
+            const angle = Math.atan2(endY - 200, endX - 300);
+            ctx2D.beginPath();
+            ctx2D.moveTo(endX, endY);
+            ctx2D.lineTo(endX - 15 * Math.cos(angle - Math.PI / 6), endY - 15 * Math.sin(angle - Math.PI / 6));
+            ctx2D.lineTo(endX - 15 * Math.cos(angle + Math.PI / 6), endY - 15 * Math.sin(angle + Math.PI / 6));
+            ctx2D.closePath();
+            ctx2D.fill();
+
+            // Update values
+            document.getElementById('x1-value').textContent = x.toFixed(1);
+            document.getElementById('y1-value').textContent = y.toFixed(1);
+            document.getElementById('vec-x').textContent = x.toFixed(1);
+            document.getElementById('vec-y').textContent = y.toFixed(1);
+
+            const magnitude = Math.sqrt(x * x + y * y);
+            document.getElementById('magnitude').textContent = magnitude.toFixed(2);
+
+            const angleRad = Math.atan2(y, x);
+            const angleDeg = angleRad * 180 / Math.PI;
+            document.getElementById('angle').textContent = angleDeg.toFixed(2);
+        }
+
+        x1Input.addEventListener('input', draw2DVector);
+        y1Input.addEventListener('input', draw2DVector);
+
+        // Vector Addition Visualization
+        const canvasAdd = document.getElementById('canvasAdd');
+        const ctxAdd = canvasAdd.getContext('2d');
+        const xaInput = document.getElementById('xa');
+        const yaInput = document.getElementById('ya');
+        const xbInput = document.getElementById('xb');
+        const ybInput = document.getElementById('yb');
+
+        function drawVectorAddition() {
+            const xa = parseFloat(xaInput.value);
+            const ya = parseFloat(yaInput.value);
+            const xb = parseFloat(xbInput.value);
+            const yb = parseFloat(ybInput.value);
+
+            ctxAdd.clearRect(0, 0, canvasAdd.width, canvasAdd.height);
+
+            // Draw grid
+            ctxAdd.strokeStyle = '#e2e8f0';
+            ctxAdd.lineWidth = 1;
+            for (let i = 0; i <= 600; i += 50) {
+                ctxAdd.beginPath();
+                ctxAdd.moveTo(i, 0);
+                ctxAdd.lineTo(i, 400);
+                ctxAdd.stroke();
+            }
+            for (let i = 0; i <= 400; i += 50) {
+                ctxAdd.beginPath();
+                ctxAdd.moveTo(0, i);
+                ctxAdd.lineTo(600, i);
+                ctxAdd.stroke();
+            }
+
+            // Draw axes
+            ctxAdd.strokeStyle = '#64748b';
+            ctxAdd.lineWidth = 2;
+            ctxAdd.beginPath();
+            ctxAdd.moveTo(0, 200);
+            ctxAdd.lineTo(600, 200);
+            ctxAdd.stroke();
+            ctxAdd.beginPath();
+            ctxAdd.moveTo(300, 0);
+            ctxAdd.lineTo(300, 400);
+            ctxAdd.stroke();
+
+            const scale = 40;
+
+            // Draw Vector A (red)
+            drawArrow(ctxAdd, 300, 200, 300 + xa * scale, 200 - ya * scale, '#ef4444', 'A');
+
+            // Draw Vector B from end of A (green)
+            const aEndX = 300 + xa * scale;
+            const aEndY = 200 - ya * scale;
+            drawArrow(ctxAdd, aEndX, aEndY, aEndX + xb * scale, aEndY - yb * scale, '#10b981', 'B');
+
+            // Draw resultant vector (blue)
+            drawArrow(ctxAdd, 300, 200, 300 + (xa + xb) * scale, 200 - (ya + yb) * scale, '#2563eb', 'A+B', 4);
+
+            // Update values
+            document.getElementById('va-x').textContent = xa.toFixed(1);
+            document.getElementById('va-y').textContent = ya.toFixed(1);
+            document.getElementById('vb-x').textContent = xb.toFixed(1);
+            document.getElementById('vb-y').textContent = yb.toFixed(1);
+            document.getElementById('sum-x').textContent = (xa + xb).toFixed(1);
+            document.getElementById('sum-y').textContent = (ya + yb).toFixed(1);
+        }
+
+        function drawArrow(ctx, fromX, fromY, toX, toY, color, label = '', width = 3) {
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = width;
+
+            // Arrow line
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+
+            // Arrow head
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - 12 * Math.cos(angle - Math.PI / 6), toY - 12 * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - 12 * Math.cos(angle + Math.PI / 6), toY - 12 * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+
+            // Label
+            if (label) {
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(label, toX + 10, toY - 10);
+            }
+        }
+
+        xaInput.addEventListener('input', drawVectorAddition);
+        yaInput.addEventListener('input', drawVectorAddition);
+        xbInput.addEventListener('input', drawVectorAddition);
+        ybInput.addEventListener('input', drawVectorAddition);
+
+        // Scalar Multiplication Visualization
+        const canvasScale = document.getElementById('canvasScale');
+        const ctxScale = canvasScale.getContext('2d');
+        const scalarInput = document.getElementById('scalar');
+
+        function drawScalarMultiplication() {
+            const scalar = parseFloat(scalarInput.value);
+            const baseX = 2, baseY = 3;
+
+            ctxScale.clearRect(0, 0, canvasScale.width, canvasScale.height);
+
+            // Draw grid
+            ctxScale.strokeStyle = '#e2e8f0';
+            ctxScale.lineWidth = 1;
+            for (let i = 0; i <= 600; i += 50) {
+                ctxScale.beginPath();
+                ctxScale.moveTo(i, 0);
+                ctxScale.lineTo(i, 400);
+                ctxScale.stroke();
+            }
+            for (let i = 0; i <= 400; i += 50) {
+                ctxScale.beginPath();
+                ctxScale.moveTo(0, i);
+                ctxScale.lineTo(600, i);
+                ctxScale.stroke();
+            }
+
+            // Draw axes
+            ctxScale.strokeStyle = '#64748b';
+            ctxScale.lineWidth = 2;
+            ctxScale.beginPath();
+            ctxScale.moveTo(0, 200);
+            ctxScale.lineTo(600, 200);
+            ctxScale.stroke();
+            ctxScale.beginPath();
+            ctxScale.moveTo(300, 0);
+            ctxScale.lineTo(300, 400);
+            ctxScale.stroke();
+
+            const scale = 30;
+
+            // Draw original vector (light)
+            drawArrow(ctxScale, 300, 200, 300 + baseX * scale, 200 - baseY * scale, '#cbd5e1', 'Original', 2);
+
+            // Draw scaled vector
+            drawArrow(ctxScale, 300, 200, 300 + baseX * scalar * scale, 200 - baseY * scalar * scale, '#2563eb', 'Scaled', 4);
+
+            // Update values
+            document.getElementById('scalar-value').textContent = scalar.toFixed(1);
+            document.getElementById('scalar-num').textContent = scalar.toFixed(1);
+            document.getElementById('scaled-x').textContent = (baseX * scalar).toFixed(1);
+            document.getElementById('scaled-y').textContent = (baseY * scalar).toFixed(1);
+        }
+
+        scalarInput.addEventListener('input', drawScalarMultiplication);
+
+        // Dot Product Visualization
+        const canvasDot = document.getElementById('canvasDot');
+        const ctxDot = canvasDot.getContext('2d');
+        let dotAngle = 0;
+
+        function drawDotProduct() {
+            const ax = 3, ay = 2;
+            const bx = Math.cos(dotAngle) * 3.6;
+            const by = Math.sin(dotAngle) * 3.6;
+
+            ctxDot.clearRect(0, 0, canvasDot.width, canvasDot.height);
+
+            // Draw grid
+            ctxDot.strokeStyle = '#e2e8f0';
+            ctxDot.lineWidth = 1;
+            for (let i = 0; i <= 600; i += 50) {
+                ctxDot.beginPath();
+                ctxDot.moveTo(i, 0);
+                ctxDot.lineTo(i, 400);
+                ctxDot.stroke();
+            }
+            for (let i = 0; i <= 400; i += 50) {
+                ctxDot.beginPath();
+                ctxDot.moveTo(0, i);
+                ctxDot.lineTo(600, i);
+                ctxDot.stroke();
+            }
+
+            // Draw axes
+            ctxDot.strokeStyle = '#64748b';
+            ctxDot.lineWidth = 2;
+            ctxDot.beginPath();
+            ctxDot.moveTo(0, 200);
+            ctxDot.lineTo(600, 200);
+            ctxDot.stroke();
+            ctxDot.beginPath();
+            ctxDot.moveTo(300, 0);
+            ctxDot.lineTo(300, 400);
+            ctxDot.stroke();
+
+            const scale = 40;
+
+            // Draw Vector A
+            drawArrow(ctxDot, 300, 200, 300 + ax * scale, 200 - ay * scale, '#ef4444', 'A', 3);
+
+            // Draw Vector B
+            drawArrow(ctxDot, 300, 200, 300 + bx * scale, 200 - by * scale, '#10b981', 'B', 3);
+
+            // Calculate dot product
+            const dotProduct = ax * bx + ay * by;
+            const magA = Math.sqrt(ax * ax + ay * ay);
+            const magB = Math.sqrt(bx * bx + by * by);
+            const cosSim = dotProduct / (magA * magB);
+
+            // Update values
+            document.getElementById('dot-bx').textContent = bx.toFixed(1);
+            document.getElementById('dot-by').textContent = by.toFixed(1);
+            document.getElementById('dot-product').textContent = dotProduct.toFixed(2);
+            document.getElementById('cos-sim').textContent = cosSim.toFixed(2);
+        }
+
+        function rotateVectorB() {
+            dotAngle += Math.PI / 8;
+            drawDotProduct();
+        }
+
+        // Initialize all
+        initCarousel();
+    </script>
+</body>
+</html>
