@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Demo - Semantic Search</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/json-formatter.css') }}">
+    <script src="{{ url_for('static', filename='js/json-formatter.js') }}"></script>
+    <style>
+        .demo-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .demo-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .demo-header .subtitle {
+            font-size: 1.25em;
+            color: var(--text-secondary);
+        }
+
+        .query-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-size: 1.125em;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1.125em;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.125em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .results-container {
+            display: none;
+            margin-top: 32px;
+        }
+
+        .answer-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        }
+
+        .answer-label {
+            color: #92400e;
+            font-size: 0.875em;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .answer-text {
+            color: #78350f;
+            font-size: 1.5em;
+            font-weight: 600;
+            line-height: 1.6;
+        }
+
+        .results-count {
+            color: #92400e;
+            font-size: 1em;
+            margin-top: 12px;
+            font-weight: 500;
+        }
+
+        .detail-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px var(--shadow);
+        }
+
+        .detail-section h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: var(--text);
+            font-size: 1.25em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-icon {
+            font-size: 1.2em;
+        }
+
+        .json-container {
+            position: relative;
+        }
+
+        .json-key {
+            color: #7dd3fc;
+        }
+
+        .json-string {
+            color: #86efac;
+        }
+
+        .json-number {
+            color: #fbbf24;
+        }
+
+        .documents-grid {
+            display: grid;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .document-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+
+        .document-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .document-card .doc-name {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1.125em;
+            margin-bottom: 8px;
+        }
+
+        .document-card .doc-details {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .document-card .doc-tag {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.875em;
+            color: var(--text-secondary);
+        }
+
+        .document-card .doc-text {
+            color: var(--text-secondary);
+            font-size: 0.9375em;
+            font-style: italic;
+            margin-top: 8px;
+        }
+
+        .status-banner {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .status-banner.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .status-banner.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
+
+        .example-queries {
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .example-queries h4 {
+            margin: 0 0 12px 0;
+            color: var(--text-secondary);
+            font-size: 0.875em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .example-queries .query-chip {
+            display: inline-block;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin: 4px;
+            font-size: 0.9375em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-queries .query-chip:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .toggle-section {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .toggle-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .toggle-option input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .toggle-option label {
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .toggle-option .description {
+            color: var(--text-secondary);
+            font-size: 0.875em;
+            margin-top: 4px;
+        }
+
+        .answer-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-left: 8px;
+        }
+
+        .answer-badge.generative {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .answer-badge.static {
+            background: #e5e7eb;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <a href="/demo" class="home-link">← Back to Demo Home</a>
+
+        <div class="demo-header">
+            <h1>🔍 Query Demo</h1>
+            <p class="subtitle">Ask questions in natural language and get instant answers</p>
+        </div>
+
+        <div id="statusBanner" class="status-banner"></div>
+
+        <div class="query-section">
+            <div class="form-group">
+                <label for="queryInput">Your Question</label>
+                <input
+                    type="text"
+                    id="queryInput"
+                    placeholder="e.g., How many boys like blue color?"
+                    autofocus
+                >
+            </div>
+
+            <div class="toggle-section">
+                <div class="toggle-option">
+                    <input type="checkbox" id="generativeToggle" checked>
+                    <div>
+                        <label for="generativeToggle">✨ Generative Output (LLM-powered)</label>
+                        <div class="description">
+                            Let the AI generate natural, context-aware answers based on your question
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="executeQuery()" id="queryBtn">
+                Search →
+            </button>
+
+            <div class="example-queries">
+                <h4>Example Queries:</h4>
+                <span class="query-chip" onclick="setQuery('how many boys like blue color')">how many boys like blue color</span>
+                <span class="query-chip" onclick="setQuery('who likes red color')">who likes red color</span>
+                <span class="query-chip" onclick="setQuery('girls who like biryani')">girls who like biryani</span>
+                <span class="query-chip" onclick="setQuery('find people who like curd rice')">find people who like curd rice</span>
+            </div>
+        </div>
+
+        <div class="results-container" id="resultsContainer">
+            <!-- Answer Box (Shown First) -->
+            <div class="answer-box">
+                <div class="answer-label">
+                    📊 Answer
+                    <span class="answer-badge" id="answerBadge">Generative</span>
+                </div>
+                <div class="answer-text" id="answerText"></div>
+                <div class="results-count" id="resultsCount"></div>
+            </div>
+
+            <!-- Matching Documents -->
+            <div class="detail-section" id="documentsSection" style="display: none;">
+                <h3><span class="section-icon">📄</span> Matching Documents</h3>
+                <div class="documents-grid" id="documentsGrid"></div>
+            </div>
+
+            <!-- Filter Query -->
+            <div class="detail-section">
+                <h3><span class="section-icon">⚙️</span> Generated Filter Query</h3>
+                <div class="json-container">
+                    <button class="json-copy-btn" onclick="copyJSON('filterQuery')">Copy</button>
+                    <div class="json-viewer" id="filterQuery"></div>
+                </div>
+            </div>
+
+            <!-- Typesense Response -->
+            <div class="detail-section">
+                <h3><span class="section-icon">💾</span> Typesense Response</h3>
+                <div class="json-container">
+                    <button class="json-copy-btn" onclick="copyJSON('typesenseResponse')">Copy</button>
+                    <div class="json-viewer" id="typesenseResponse"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentModel = 'gemma3:1b';
+        const jsonFormatter = new JSONFormatter({ collapsible: false });
+
+        // Copy JSON to clipboard
+        function copyJSON(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = element.previousElementSibling;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // Set query from example
+        function setQuery(query) {
+            document.getElementById('queryInput').value = query;
+            document.getElementById('queryInput').focus();
+        }
+
+        // Execute query
+        async function executeQuery() {
+            const query = document.getElementById('queryInput').value;
+            const generative = document.getElementById('generativeToggle').checked;
+
+            if (!query.trim()) {
+                showStatus('Please enter a query', 'error');
+                return;
+            }
+
+            setLoading(true);
+            document.getElementById('resultsContainer').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        model: currentModel,
+                        generative: generative
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(result);
+                    document.getElementById('resultsContainer').style.display = 'block';
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Display results
+        function displayResults(result) {
+            // 1. Answer (First)
+            document.getElementById('answerText').textContent = result.answer;
+            document.getElementById('resultsCount').textContent =
+                `Found ${result.found} result${result.found !== 1 ? 's' : ''}`;
+
+            // Update answer badge
+            const badge = document.getElementById('answerBadge');
+            if (result.generative) {
+                badge.textContent = 'Generative';
+                badge.className = 'answer-badge generative';
+            } else {
+                badge.textContent = 'Static';
+                badge.className = 'answer-badge static';
+            }
+
+            // 2. Matching Documents
+            const hits = result.results.hits || [];
+            if (hits.length > 0) {
+                const docsGrid = document.getElementById('documentsGrid');
+                docsGrid.innerHTML = '';
+
+                hits.forEach(hit => {
+                    const doc = hit.document;
+                    const card = document.createElement('div');
+                    card.className = 'document-card';
+
+                    const name = doc.name || 'Unknown';
+                    const gender = doc.gender || '';
+                    const color = doc.likes_color || '';
+                    const food = doc.likes_food || '';
+                    const text = doc.text || '';
+
+                    card.innerHTML = `
+                        <div class="doc-name">${name}</div>
+                        <div class="doc-details">
+                            ${gender ? `<span class="doc-tag">👤 ${gender}</span>` : ''}
+                            ${color ? `<span class="doc-tag">🎨 ${color}</span>` : ''}
+                            ${food ? `<span class="doc-tag">🍽️ ${food}</span>` : ''}
+                        </div>
+                        <div class="doc-text">"${text}"</div>
+                    `;
+
+                    docsGrid.appendChild(card);
+                });
+
+                document.getElementById('documentsSection').style.display = 'block';
+            } else {
+                document.getElementById('documentsSection').style.display = 'none';
+            }
+
+            // 3. Filter Query
+            const filterQuery = {
+                q: result.typesense_params.q,
+                filter_by: result.typesense_params.filter_by || '(none)',
+                natural_answer: result.typesense_params.natural_answer
+            };
+            document.getElementById('filterQuery').innerHTML =
+                jsonFormatter.format(filterQuery);
+
+            // 4. Typesense Response
+            document.getElementById('typesenseResponse').innerHTML =
+                jsonFormatter.format(result.results);
+        }
+
+        // Show status banner
+        function showStatus(message, type) {
+            const banner = document.getElementById('statusBanner');
+            banner.textContent = message;
+            banner.className = `status-banner ${type}`;
+            banner.style.display = 'flex';
+
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 5000);
+        }
+
+        // Loading state
+        function setLoading(isLoading) {
+            const btn = document.getElementById('queryBtn');
+
+            if (isLoading) {
+                btn.setAttribute('data-original-text', btn.textContent);
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner"></span>Searching...';
+            } else {
+                btn.disabled = false;
+                const originalText = btn.getAttribute('data-original-text') || 'Search →';
+                btn.textContent = originalText;
+            }
+        }
+
+        // Enter key to search
+        document.getElementById('queryInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                executeQuery();
+            }
+        });
+
+        // Check if data exists on load
+        fetch('/api/health')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.typesense_healthy) {
+                    showStatus('Warning: Cannot connect to Typesense. Please ensure data is loaded.', 'warning');
+                }
+            });
+    </script>
+</body>
+</html>

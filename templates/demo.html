@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Demos - Semantic Search</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .demo-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .demo-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .demo-header .subtitle {
+            font-size: 1.25em;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .demos-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            margin-top: 48px;
+        }
+
+        .demo-item {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .demo-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 16px var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .demo-item-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .demo-icon {
+            font-size: 2.5em;
+            line-height: 1;
+        }
+
+        .demo-item h2 {
+            margin: 0;
+            font-size: 1.5em;
+            color: var(--text);
+        }
+
+        .demo-item .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9375em;
+            margin-top: 4px;
+        }
+
+        .demo-description {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .demo-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .feature-tag {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.875em;
+            color: var(--text-secondary);
+        }
+
+        .demo-item:hover .feature-tag {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge.live {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.recommended {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .intro-section {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .intro-section h3 {
+            margin: 0 0 12px 0;
+            color: var(--text);
+            font-size: 1.375em;
+        }
+
+        .intro-section p {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 32px;
+        }
+
+        .quick-action {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .quick-action .icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        .quick-action h4 {
+            margin: 0 0 8px 0;
+            font-size: 1em;
+            color: var(--text);
+        }
+
+        .quick-action p {
+            margin: 0;
+            font-size: 0.875em;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <a href="/" class="home-link">← Back to Home</a>
+
+        <div class="demo-header">
+            <h1>🚀 Interactive Demos</h1>
+            <p class="subtitle">
+                Explore different aspects of semantic search through hands-on demonstrations.
+                Each demo focuses on a specific part of the pipeline.
+            </p>
+        </div>
+
+        <div class="intro-section">
+            <h3>💡 Choose Your Learning Path</h3>
+            <p>
+                Start with the <strong>Full Pipeline Demo</strong> to see the complete workflow,
+                or jump directly to the <strong>Query Demo</strong> if data is already loaded.
+            </p>
+        </div>
+
+        <div class="demos-list">
+            <!-- Full Pipeline Demo -->
+            <a href="/demo/full" class="demo-item">
+                <div class="demo-item-header">
+                    <div class="demo-icon">🔄</div>
+                    <div>
+                        <h2>
+                            Full Pipeline Demo
+                            <span class="status-badge recommended">Recommended</span>
+                        </h2>
+                        <div class="subtitle">Complete end-to-end workflow</div>
+                    </div>
+                </div>
+                <p class="demo-description">
+                    Experience the complete semantic search pipeline from start to finish.
+                    Input unstructured text, watch it get structured by an LLM, store it in Typesense,
+                    and query it with natural language. Perfect for understanding how all the pieces fit together.
+                </p>
+                <div class="demo-features">
+                    <span class="feature-tag">📝 Data Input</span>
+                    <span class="feature-tag">🤖 LLM Structuring</span>
+                    <span class="feature-tag">💾 Database Storage</span>
+                    <span class="feature-tag">🔍 Natural Language Query</span>
+                    <span class="feature-tag">📊 Visual Progress</span>
+                </div>
+            </a>
+
+            <!-- Query Only Demo -->
+            <a href="/demo/query" class="demo-item">
+                <div class="demo-item-header">
+                    <div class="demo-icon">🔍</div>
+                    <div>
+                        <h2>
+                            Query Demo
+                            <span class="status-badge live">Live</span>
+                        </h2>
+                        <div class="subtitle">Focused search experience</div>
+                    </div>
+                </div>
+                <p class="demo-description">
+                    A streamlined interface for querying pre-loaded data. Ask questions in natural language
+                    and see how they're translated into database filters. View results with highlighted answers,
+                    matching documents, and detailed query explanations.
+                </p>
+                <div class="demo-features">
+                    <span class="feature-tag">⚡ Fast Queries</span>
+                    <span class="feature-tag">💬 Natural Language</span>
+                    <span class="feature-tag">📄 Document Cards</span>
+                    <span class="feature-tag">🔧 Filter Translation</span>
+                    <span class="feature-tag">📋 Example Queries</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="demo-grid">
+            <div class="quick-action">
+                <div class="icon">📚</div>
+                <h4>Sample Data Included</h4>
+                <p>Pre-configured examples ready to use</p>
+            </div>
+
+            <div class="quick-action">
+                <div class="icon">🎯</div>
+                <h4>Model Selection</h4>
+                <p>Choose from 3 Gemma3 model sizes</p>
+            </div>
+
+            <div class="quick-action">
+                <div class="icon">⚙️</div>
+                <h4>Fully Modular</h4>
+                <p>Reusable components and services</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

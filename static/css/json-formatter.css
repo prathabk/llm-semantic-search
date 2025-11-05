@@ -1,0 +1,178 @@
+/**
+ * JSON Formatter Styles
+ * Syntax highlighting and formatting for JSON display
+ */
+
+.json-viewer {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 20px;
+    border-radius: 8px;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+    font-size: 0.9375em;
+    overflow-x: auto;
+    line-height: 1.6;
+    white-space: pre;
+}
+
+/* JSON syntax elements */
+.json-key {
+    color: #7dd3fc;
+    font-weight: 500;
+}
+
+.json-string {
+    color: #86efac;
+}
+
+.json-number {
+    color: #fbbf24;
+}
+
+.json-boolean {
+    color: #fb923c;
+    font-weight: 600;
+}
+
+.json-null {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.json-undefined {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.json-punctuation {
+    color: #cbd5e1;
+}
+
+.json-error {
+    color: #ef4444;
+    font-weight: 500;
+}
+
+/* Collapsible sections */
+.json-collapse {
+    display: inline-block;
+    width: 16px;
+    cursor: pointer;
+    user-select: none;
+    color: #94a3b8;
+    margin-right: 4px;
+    transition: color 0.2s;
+}
+
+.json-collapse:hover {
+    color: #cbd5e1;
+}
+
+.json-content {
+    display: block;
+}
+
+/* Compact view for simple objects */
+.json-viewer.compact {
+    padding: 12px 16px;
+}
+
+/* Light theme variant */
+.json-viewer.light {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.json-viewer.light .json-key {
+    color: #0369a1;
+}
+
+.json-viewer.light .json-string {
+    color: #15803d;
+}
+
+.json-viewer.light .json-number {
+    color: #b45309;
+}
+
+.json-viewer.light .json-boolean {
+    color: #c2410c;
+}
+
+.json-viewer.light .json-null,
+.json-viewer.light .json-undefined {
+    color: #64748b;
+}
+
+.json-viewer.light .json-punctuation {
+    color: #475569;
+}
+
+.json-viewer.light .json-collapse {
+    color: #64748b;
+}
+
+.json-viewer.light .json-collapse:hover {
+    color: #475569;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .json-viewer {
+        font-size: 0.875em;
+        padding: 16px;
+    }
+}
+
+/* Copy button for JSON viewers */
+.json-container {
+    position: relative;
+}
+
+.json-copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #e2e8f0;
+    font-size: 0.8125em;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0;
+    z-index: 10;
+}
+
+.json-container:hover .json-copy-btn {
+    opacity: 1;
+}
+
+.json-copy-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.json-copy-btn.copied {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+/* Scrollbar styling for dark theme */
+.json-viewer::-webkit-scrollbar {
+    height: 8px;
+}
+
+.json-viewer::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.json-viewer::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.json-viewer::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}

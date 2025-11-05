@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Search Demo - Interactive Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/json-formatter.css') }}">
+    <script src="{{ url_for('static', filename='js/json-formatter.js') }}"></script>
+    <style>
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .demo-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .demo-header .subtitle {
+            font-size: 1.25em;
+            color: var(--text-secondary);
+        }
+
+        .status-banner {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .status-banner.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .status-banner.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .status-banner.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid var(--primary);
+        }
+
+        .demo-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px var(--shadow);
+        }
+
+        .demo-section h2 {
+            font-size: 1.5em;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .demo-section .section-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 0.9375em;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .form-group textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9375em;
+            resize: vertical;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1em;
+            background: var(--surface);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--bg);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .output-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .output-box pre {
+            margin: 0;
+            font-size: 0.875em;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .output-box h4 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            color: var(--text);
+            font-size: 1em;
+        }
+
+        .answer-box {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 16px;
+            font-size: 1.125em;
+            font-weight: 500;
+        }
+
+        .answer-box .answer-label {
+            color: #92400e;
+            font-size: 0.875em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .answer-box .answer-text {
+            color: #78350f;
+        }
+
+        .step-indicator {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 16px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .step.active {
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .step.completed {
+            border-color: #10b981;
+            background: #d1fae5;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            line-height: 32px;
+            border-radius: 50%;
+            background: var(--border);
+            color: var(--text-secondary);
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .step.active .step-number {
+            background: var(--primary);
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: #10b981;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.875em;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .step.active .step-label {
+            color: var(--text);
+        }
+
+        .sample-data-btn {
+            font-size: 0.875em;
+            padding: 6px 12px;
+            margin-top: 8px;
+        }
+
+        .info-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            font-size: 0.875em;
+            color: var(--text-secondary);
+            margin-left: 8px;
+        }
+
+        .json-preview {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.875em;
+            overflow-x: auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .stat-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.875em;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .toggle-section {
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .toggle-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .toggle-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .toggle-option label {
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0;
+            font-size: 0.9375em;
+        }
+
+        .toggle-option .description {
+            color: var(--text-secondary);
+            font-size: 0.8125em;
+            margin-top: 2px;
+        }
+
+        .answer-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-left: 6px;
+        }
+
+        .answer-badge.generative {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .answer-badge.static {
+            background: #e5e7eb;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <a href="/demo" class="home-link">← Back to Demo Home</a>
+
+        <div class="demo-header">
+            <h1>🚀 Semantic Search Demo</h1>
+            <p class="subtitle">Interactive demonstration of LLM-powered semantic search with Typesense</p>
+        </div>
+
+        <div id="statusBanner" class="status-banner"></div>
+
+        <div class="step-indicator">
+            <div class="step" id="step1">
+                <div class="step-number">1</div>
+                <div class="step-label">Input Data</div>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <div class="step-label">Structure with LLM</div>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <div class="step-label">Store in DB</div>
+            </div>
+            <div class="step" id="step4">
+                <div class="step-number">4</div>
+                <div class="step-label">Query</div>
+            </div>
+        </div>
+
+        <!-- Step 1: Input Data -->
+        <div class="demo-section">
+            <h2>Step 1: Input Unstructured Data</h2>
+            <p class="section-subtitle">Enter your unstructured text data (one document per line)</p>
+
+            <div class="form-group">
+                <label for="inputData">
+                    Unstructured Text Data
+                    <span class="info-badge" id="lineCount">0 lines</span>
+                </label>
+                <textarea
+                    id="inputData"
+                    placeholder="Enter unstructured text, one document per line...&#10;Example:&#10;Balu is a boy. He likes blue color and curd rice.&#10;Ram is a boy. He likes red color and briyani."
+                ></textarea>
+                <button class="btn btn-secondary sample-data-btn" onclick="loadSampleData()">
+                    Load Sample Data
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label for="modelSelect">Select LLM Model</label>
+                <select id="modelSelect">
+                    <option value="gemma3:270m">Gemma 3:270M (Fastest)</option>
+                    <option value="gemma3:1b" selected>Gemma 3:1B (Balanced)</option>
+                    <option value="gemma3:4b">Gemma 3:4B (Most Accurate)</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="structureData()" id="structureBtn">
+                    Structure Data with LLM →
+                </button>
+            </div>
+
+            <div id="structuredOutput" class="output-box" style="display: none;">
+                <h4>Structured JSON Data</h4>
+                <pre id="structuredJson"></pre>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="docCount">0</div>
+                        <div class="stat-label">Documents Structured</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="modelUsed">-</div>
+                        <div class="stat-label">Model Used</div>
+                    </div>
+                </div>
+
+                <div class="button-group" style="margin-top: 16px;">
+                    <button class="btn btn-primary" onclick="storeInTypesense()" id="storeBtn">
+                        Store in Typesense →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Query -->
+        <div class="demo-section" id="querySection" style="display: none;">
+            <h2>Step 2: Query Your Data</h2>
+            <p class="section-subtitle">Ask questions in natural language</p>
+
+            <div class="form-group">
+                <label for="queryInput">Natural Language Query</label>
+                <input
+                    type="text"
+                    id="queryInput"
+                    placeholder="e.g., How many boys like blue color?"
+                >
+            </div>
+
+            <div class="toggle-section">
+                <div class="toggle-option">
+                    <input type="checkbox" id="generativeToggle" checked>
+                    <div>
+                        <label for="generativeToggle">✨ Generative Output</label>
+                        <div class="description">
+                            Use LLM to generate context-aware answers
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="executeQuery()" id="queryBtn">
+                    Search →
+                </button>
+                <button class="btn btn-secondary" onclick="resetDemo()">
+                    Reset Demo
+                </button>
+            </div>
+
+            <div id="queryOutput" class="output-box" style="display: none;">
+                <div id="answerBox" class="answer-box" style="margin-bottom: 24px;">
+                    <div class="answer-label">
+                        📊 Answer
+                        <span class="answer-badge" id="answerBadge">Generative</span>
+                    </div>
+                    <div class="answer-text" id="answerText"></div>
+                </div>
+
+                <h4>Generated Filter Query</h4>
+                <div class="json-container">
+                    <button class="json-copy-btn" onclick="copyJSON('typesenseQuery')">Copy</button>
+                    <div class="json-viewer compact" id="typesenseQuery"></div>
+                </div>
+
+                <h4 style="margin-top: 24px;">Typesense Response</h4>
+                <div class="json-container">
+                    <button class="json-copy-btn" onclick="copyJSON('rawResults')">Copy</button>
+                    <div class="json-viewer" id="rawResults"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JSON Formatter
+        const jsonFormatter = new JSONFormatter({ collapsible: false });
+
+        // Copy JSON to clipboard
+        function copyJSON(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = element.previousElementSibling;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // State
+        let structuredData = [];
+        let currentModel = 'gemma3:1b';
+
+        // Update line count
+        document.getElementById('inputData').addEventListener('input', (e) => {
+            const lines = e.target.value.split('\n').filter(line => line.trim()).length;
+            document.getElementById('lineCount').textContent = `${lines} lines`;
+        });
+
+        // Load sample data
+        function loadSampleData() {
+            const sampleData = `Balu is a boy. He likes blue color and curd rice.
+He like red color and his name is Babluo, but he always eats sambar rice.
+Ram is a boy. He likes red color and briyani.
+Bob sometimes eats curd rice but most of the time he prefers briyani while eating he always wears yellow dress
+Sheela is a girl. She likes orange color and curd rice.
+Sunita is a girl. She likes blue color and chicken bryani.`;
+
+            document.getElementById('inputData').value = sampleData;
+            document.getElementById('lineCount').textContent = '6 lines';
+            showStatus('Sample data loaded!', 'success');
+        }
+
+        // Structure data with LLM
+        async function structureData() {
+            const inputData = document.getElementById('inputData').value;
+            const model = document.getElementById('modelSelect').value;
+            currentModel = model;
+
+            if (!inputData.trim()) {
+                showStatus('Please enter some data first', 'error');
+                return;
+            }
+
+            const lines = inputData.split('\n').filter(line => line.trim());
+
+            setLoading('structureBtn', true);
+            updateStep(2, 'active');
+
+            try {
+                const response = await fetch('/api/structure', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ texts: lines, model: model })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    structuredData = result.data;
+                    // Use pre tag for plain JSON in the structuring step
+                    document.getElementById('structuredJson').textContent =
+                        JSON.stringify(result.data, null, 2);
+                    document.getElementById('docCount').textContent = result.count;
+                    document.getElementById('modelUsed').textContent = model.split(':')[1];
+                    document.getElementById('structuredOutput').style.display = 'block';
+
+                    updateStep(2, 'completed');
+                    showStatus(`Successfully structured ${result.count} documents!`, 'success');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                updateStep(2, '');
+            } finally {
+                setLoading('structureBtn', false);
+            }
+        }
+
+        // Store in Typesense
+        async function storeInTypesense() {
+            if (structuredData.length === 0) {
+                showStatus('No data to store', 'error');
+                return;
+            }
+
+            setLoading('storeBtn', true);
+            updateStep(3, 'active');
+
+            try {
+                const response = await fetch('/api/store', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        documents: structuredData,
+                        recreate: true
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    updateStep(3, 'completed');
+                    updateStep(4, 'active');
+                    showStatus(`Stored ${result.inserted} documents in Typesense!`, 'success');
+                    document.getElementById('querySection').style.display = 'block';
+                    document.getElementById('querySection').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                updateStep(3, '');
+            } finally {
+                setLoading('storeBtn', false);
+            }
+        }
+
+        // Execute query
+        async function executeQuery() {
+            const query = document.getElementById('queryInput').value;
+            const generative = document.getElementById('generativeToggle').checked;
+
+            if (!query.trim()) {
+                showStatus('Please enter a query', 'error');
+                return;
+            }
+
+            setLoading('queryBtn', true);
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        model: currentModel,
+                        generative: generative
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Update answer badge
+                    const badge = document.getElementById('answerBadge');
+                    if (result.generative) {
+                        badge.textContent = 'Generative';
+                        badge.className = 'answer-badge generative';
+                    } else {
+                        badge.textContent = 'Static';
+                        badge.className = 'answer-badge static';
+                    }
+
+                    // Show answer
+                    document.getElementById('answerText').textContent = result.answer;
+
+                    // Show Typesense query (formatted JSON)
+                    const filterQuery = {
+                        q: result.typesense_params.q,
+                        filter_by: result.typesense_params.filter_by || '(none)',
+                        natural_answer: result.typesense_params.natural_answer
+                    };
+                    document.getElementById('typesenseQuery').innerHTML =
+                        jsonFormatter.format(filterQuery);
+
+                    // Show raw results (formatted JSON)
+                    document.getElementById('rawResults').innerHTML =
+                        jsonFormatter.format(result.results);
+
+                    document.getElementById('queryOutput').style.display = 'block';
+                    updateStep(4, 'completed');
+                    showStatus('Query executed successfully!', 'success');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                setLoading('queryBtn', false);
+            }
+        }
+
+        // Reset demo
+        function resetDemo() {
+            structuredData = [];
+            document.getElementById('inputData').value = '';
+            document.getElementById('lineCount').textContent = '0 lines';
+            document.getElementById('queryInput').value = '';
+            document.getElementById('structuredOutput').style.display = 'none';
+            document.getElementById('querySection').style.display = 'none';
+            document.getElementById('queryOutput').style.display = 'none';
+
+            // Reset steps
+            for (let i = 1; i <= 4; i++) {
+                updateStep(i, '');
+            }
+            updateStep(1, 'active');
+
+            showStatus('Demo reset', 'info');
+        }
+
+        // Utility functions
+        function showStatus(message, type) {
+            const banner = document.getElementById('statusBanner');
+            banner.textContent = message;
+            banner.className = `status-banner ${type}`;
+            banner.style.display = 'flex';
+
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 5000);
+        }
+
+        function setLoading(btnId, isLoading) {
+            const btn = document.getElementById(btnId);
+
+            if (isLoading) {
+                // Store original text before changing it
+                btn.setAttribute('data-original-text', btn.textContent);
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner"></span>Processing...';
+            } else {
+                btn.disabled = false;
+                // Restore original text
+                const originalText = btn.getAttribute('data-original-text') || btn.textContent;
+                btn.textContent = originalText;
+            }
+        }
+
+        function updateStep(stepNum, state) {
+            const step = document.getElementById(`step${stepNum}`);
+            step.className = 'step';
+            if (state) {
+                step.classList.add(state);
+            }
+        }
+
+        // Initialize
+        updateStep(1, 'active');
+
+        // Check Typesense health on load
+        fetch('/api/health')
+            .then(res => res.json())
+            .then(data => {
+                if (data.typesense_healthy) {
+                    showStatus('Connected to Typesense ✓', 'success');
+                } else {
+                    showStatus('Warning: Cannot connect to Typesense', 'error');
+                }
+            })
+            .catch(() => {
+                showStatus('Warning: Cannot connect to Typesense', 'error');
+            });
+    </script>
+</body>
+</html>
