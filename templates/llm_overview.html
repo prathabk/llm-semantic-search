@@ -189,9 +189,6 @@
                         <div class="course-info">
                             <p>Large Language Models (LLMs) like ChatGPT, Claude, and GPT-4 have transformed how we interact with AI. But how do they actually work?</p>
                             <p>In this journey, we'll explore the fundamental concepts behind LLMs - from word prediction to transformer architecture - in an intuitive, visual way.</p>
-                            <p style="margin-top: 32px; color: var(--text-secondary);">
-                                Use arrow keys or buttons below to navigate
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -668,7 +665,10 @@
             // Reinitialize visualizations when entering specific slides
             setTimeout(() => {
                 if (currentSlide === 3) drawEmbeddingVisualization();
-                if (currentSlide === 5) drawAttentionVisualization();
+                if (currentSlide === 5) {
+                    drawAttentionVisualization();
+                    setupAttentionInteraction();
+                }
                 if (currentSlide === 6) drawTrainingVisualization();
             }, 100);
         }
@@ -820,34 +820,39 @@
         }
 
         // ========== ATTENTION VISUALIZATION (Slide 6) ==========
-        function drawAttentionVisualization() {
-            const canvas = document.getElementById('attentionCanvas');
-            if (!canvas) return;
-
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
-
-            ctx.clearRect(0, 0, width, height);
-
-            const words = ['The', 'cat', 'sat', 'on', 'the', 'mat'];
-            const wordWidth = 80;
-            const wordHeight = 40;
-            const startX = 60;
-            const startY = 80;
-            const spacing = 90;
-
-            // Attention matrix (simplified - each word attends to others)
-            const attentionWeights = [
+        // Global state for attention visualization
+        let attentionState = {
+            selectedWord: 1,
+            hoveredWord: -1,
+            canvas: null,
+            words: ['The', 'cat', 'sat', 'on', 'the', 'mat'],
+            wordWidth: 80,
+            wordHeight: 40,
+            startX: 60,
+            startY: 80,
+            spacing: 90,
+            attentionWeights: [
                 [0.3, 0.1, 0.1, 0.1, 0.2, 0.2],  // The
                 [0.2, 0.4, 0.2, 0.1, 0.05, 0.05], // cat
                 [0.15, 0.25, 0.3, 0.15, 0.1, 0.05], // sat
                 [0.1, 0.1, 0.2, 0.3, 0.15, 0.15],  // on
                 [0.2, 0.1, 0.1, 0.15, 0.3, 0.15], // the
                 [0.2, 0.15, 0.1, 0.15, 0.2, 0.2]  // mat
-            ];
+            ]
+        };
 
-            let selectedWord = 1; // Default to 'cat'
+        function drawAttentionVisualization() {
+            const canvas = document.getElementById('attentionCanvas');
+            if (!canvas) return;
+
+            attentionState.canvas = canvas;
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const { words, wordWidth, wordHeight, startX, startY, spacing, attentionWeights, selectedWord, hoveredWord } = attentionState;
 
             // Draw attention connections
             words.forEach((word, i) => {
@@ -935,6 +940,108 @@
             ctx.fillStyle = '#64748b';
             ctx.font = '12px Arial';
             ctx.fillText('Line thickness represents attention strength', width / 2, height - 12);
+
+            // Draw hover tooltip if hovering over a word
+            if (hoveredWord >= 0) {
+                const weight = attentionWeights[selectedWord][hoveredWord];
+                const tooltipText = `Attention: ${(weight * 100).toFixed(1)}%`;
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.fillRect(width / 2 - 60, 10, 120, 30);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(tooltipText, width / 2, 28);
+            }
+        }
+
+        function setupAttentionInteraction() {
+            const canvas = attentionState.canvas || document.getElementById('attentionCanvas');
+            if (!canvas) return;
+
+            // Remove old listeners
+            canvas.onclick = null;
+            canvas.onmousemove = null;
+            canvas.onmouseleave = null;
+
+            // Click handler
+            canvas.onclick = function(event) {
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                const { words, wordWidth, wordHeight, startX, startY, spacing } = attentionState;
+
+                // Check if click is on source words (top row)
+                for (let i = 0; i < words.length; i++) {
+                    const wordX = startX + i * spacing;
+                    const wordY = startY;
+
+                    if (x >= wordX && x <= wordX + wordWidth &&
+                        y >= wordY && y <= wordY + wordHeight) {
+                        attentionState.selectedWord = i;
+                        drawAttentionVisualization();
+                        break;
+                    }
+                }
+            };
+
+            // Hover handler
+            canvas.onmousemove = function(event) {
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                const { words, wordWidth, wordHeight, startX, startY, spacing } = attentionState;
+                let foundHover = false;
+
+                // Check if hovering over source words (top row)
+                for (let i = 0; i < words.length; i++) {
+                    const wordX = startX + i * spacing;
+                    const wordY = startY;
+
+                    if (x >= wordX && x <= wordX + wordWidth &&
+                        y >= wordY && y <= wordY + wordHeight) {
+                        canvas.style.cursor = 'pointer';
+                        foundHover = true;
+                        break;
+                    }
+                }
+
+                // Check if hovering over target words (bottom row) for attention values
+                for (let i = 0; i < words.length; i++) {
+                    const wordX = startX + i * spacing;
+                    const wordY = startY + 200;
+
+                    if (x >= wordX && x <= wordX + wordWidth &&
+                        y >= wordY && y <= wordY + wordHeight) {
+                        if (attentionState.hoveredWord !== i) {
+                            attentionState.hoveredWord = i;
+                            drawAttentionVisualization();
+                        }
+                        foundHover = true;
+                        break;
+                    }
+                }
+
+                if (!foundHover) {
+                    canvas.style.cursor = 'default';
+                    if (attentionState.hoveredWord !== -1) {
+                        attentionState.hoveredWord = -1;
+                        drawAttentionVisualization();
+                    }
+                }
+            };
+
+            // Mouse leave handler
+            canvas.onmouseleave = function() {
+                canvas.style.cursor = 'default';
+                if (attentionState.hoveredWord !== -1) {
+                    attentionState.hoveredWord = -1;
+                    drawAttentionVisualization();
+                }
+            };
         }
 
         // ========== TRAINING VISUALIZATION (Slide 7) ==========
@@ -999,28 +1106,25 @@
 
             ctx.fillText('Training Steps (Billions)', width / 2, height - 10);
 
-            // Add annotation
-            ctx.fillStyle = '#2563eb';
+            // Add annotation with background for visibility
+            const annotationText = 'Model gets better over time!';
+            const annotationX = width - 250;
+            const annotationY = 100;
+
+            // Measure text for background
             ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText('Model gets better over time!', width - 250, 60);
+            const textMetrics = ctx.measureText(annotationText);
+            const textWidth = textMetrics.width;
+            const textHeight = 20;
+            const padding = 8;
 
-            // Draw arrow pointing to curve
-            ctx.strokeStyle = '#2563eb';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(width - 140, 70);
-            ctx.lineTo(width - 100, 100);
-            ctx.stroke();
 
-            // Arrowhead
+
+            // Draw text
             ctx.fillStyle = '#2563eb';
-            ctx.beginPath();
-            ctx.moveTo(width - 100, 100);
-            ctx.lineTo(width - 105, 92);
-            ctx.lineTo(width - 95, 95);
-            ctx.closePath();
-            ctx.fill();
+            ctx.textAlign = 'left';
+            ctx.fillText(annotationText, annotationX, annotationY);
+
         }
 
         // Initialize carousel

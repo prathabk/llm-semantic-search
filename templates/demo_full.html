@@ -468,10 +468,16 @@
                     </div>
                 </div>
 
-                <div class="button-group" style="margin-top: 16px;">
-                    <button class="btn btn-primary" onclick="storeInTypesense()" id="storeBtn">
-                        Store in Typesense →
+                <div class="button-group" style="margin-top: 16px; display: flex; gap: 12px;">
+                    <button class="btn btn-primary" onclick="console.log('Clear and Store clicked'); storeInTypesense(true);" id="clearStoreBtn" style="flex: 1;">
+                        🗑️ Clear and Store
                     </button>
+                    <button class="btn" onclick="console.log('Append clicked'); storeInTypesense(false);" id="appendBtn" style="flex: 1; background: #10b981; color: white;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+                        ➕ Append
+                    </button>
+                </div>
+                <div style="margin-top: 12px; padding: 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); font-size: 0.875em; color: var(--text-secondary);">
+                    <strong style="color: var(--text);">💡 Tip:</strong> Use <strong>Clear and Store</strong> to replace existing data or <strong>Append</strong> to add to existing data without clearing.
                 </div>
             </div>
         </div>
@@ -629,41 +635,54 @@ Sunita is a girl. She likes blue color and chicken bryani.`;
         }
 
         // Store in Typesense
-        async function storeInTypesense() {
-            if (structuredData.length === 0) {
-                showStatus('No data to store', 'error');
+        async function storeInTypesense(recreate = true) {
+            console.log('storeInTypesense called, recreate:', recreate);
+            console.log('structuredData:', structuredData);
+
+            if (!structuredData || structuredData.length === 0) {
+                showStatus('No data to store. Please structure data first.', 'error');
+                console.error('No structured data available');
                 return;
             }
 
-            setLoading('storeBtn', true);
+            const buttonId = recreate ? 'clearStoreBtn' : 'appendBtn';
+            console.log('Button ID:', buttonId);
+
+            setLoading(buttonId, true);
             updateStep(3, 'active');
 
             try {
+                console.log('Sending request to /api/store');
                 const response = await fetch('/api/store', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         documents: structuredData,
-                        recreate: true
+                        recreate: recreate
                     })
                 });
 
+                console.log('Response status:', response.status);
                 const result = await response.json();
+                console.log('Result:', result);
 
                 if (result.success) {
                     updateStep(3, 'completed');
                     updateStep(4, 'active');
-                    showStatus(`Stored ${result.inserted} documents in Typesense!`, 'success');
+                    const action = recreate ? 'Cleared and stored' : 'Appended';
+                    showStatus(`${action} ${result.inserted} documents in Typesense!`, 'success');
                     document.getElementById('querySection').style.display = 'block';
                     document.getElementById('querySection').scrollIntoView({ behavior: 'smooth' });
                 } else {
-                    throw new Error(result.error);
+                    showStatus(`Error: ${result.error || 'Unknown error'}`, 'error');
+                    console.error('Store failed:', result.error);
                 }
             } catch (error) {
-                showStatus(`Error: ${error.message}`, 'error');
+                console.error('Store error:', error);
+                showStatus(`Error storing data: ${error.message}`, 'error');
                 updateStep(3, '');
             } finally {
-                setLoading('storeBtn', false);
+                setLoading(buttonId, false);
             }
         }
 
@@ -790,19 +809,7 @@ Sunita is a girl. She likes blue color and chicken bryani.`;
         // Initialize
         updateStep(1, 'active');
 
-        // Check Typesense health on load
-        fetch('/api/health')
-            .then(res => res.json())
-            .then(data => {
-                if (data.typesense_healthy) {
-                    showStatus('Connected to Typesense ✓', 'success');
-                } else {
-                    showStatus('Warning: Cannot connect to Typesense', 'error');
-                }
-            })
-            .catch(() => {
-                showStatus('Warning: Cannot connect to Typesense', 'error');
-            });
+        // Health check removed - validation now happens only on action
     </script>
 </body>
 </html>

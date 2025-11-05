@@ -84,6 +84,42 @@ class TypesenseService:
 
         return response.json() if response.status_code == 200 else {}
 
+    def create_collection_for_chunks(self) -> Dict[str, Any]:
+        """
+        Create collection specifically for text chunks
+
+        Returns:
+            API response
+        """
+        schema = {
+            "name": self.collection_name,
+            "fields": [
+                {"name": "chunk_id", "type": "int32"},
+                {"name": "text", "type": "string"},
+                {"name": "strategy", "type": "string", "facet": True},
+                {"name": "metadata", "type": "string", "optional": True},
+                {"name": "chunk_index", "type": "int32"}
+            ]
+        }
+
+        # Delete collection if exists
+        try:
+            self.delete_collection()
+        except:
+            pass  # Collection might not exist
+
+        # Create new collection
+        response = requests.post(
+            f'{self.base_url}/collections',
+            json=schema,
+            headers=self.headers
+        )
+
+        if response.status_code not in [200, 201]:
+            raise Exception(f"Failed to create collection: {response.text}")
+
+        return response.json()
+
     def insert_documents(self, documents: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Insert multiple documents into collection
@@ -95,9 +131,12 @@ class TypesenseService:
             Insert results
         """
         import json
+        import time
 
         # Prepare documents with IDs and flatten nested structures
         docs_with_ids = []
+        timestamp = int(time.time() * 1000)  # Use millisecond timestamp for uniqueness
+
         for i, doc in enumerate(documents):
             doc_copy = doc.copy()
 
@@ -109,8 +148,9 @@ class TypesenseService:
                 if 'food' in likes:
                     doc_copy['likes_food'] = likes['food']
 
+            # Generate unique ID using timestamp + index to avoid conflicts when appending
             if 'id' not in doc_copy:
-                doc_copy['id'] = str(i + 1)
+                doc_copy['id'] = f"{timestamp}_{i}"
             docs_with_ids.append(doc_copy)
 
         # Import documents - each document as a JSON line

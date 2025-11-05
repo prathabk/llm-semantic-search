@@ -299,9 +299,6 @@
                         <p class="subtitle">Vectors & Embeddings: How Machines Understand Meaning</p>
                         <div class="course-info">
                             <p>Discover how modern AI represents knowledge — not as rules or symbols, but as geometric patterns in high-dimensional space.</p>
-                            <p style="margin-top: 24px; color: var(--text-secondary);">
-                                Use arrow keys or buttons below to navigate
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -1109,7 +1106,7 @@
             'king': { x: 400, y: 150, category: 'royalty', color: '#2563eb' },
             'queen': { x: 420, y: 250, category: 'royalty', color: '#2563eb' },
             'man': { x: 200, y: 140, category: 'person', color: '#10b981' },
-            'woman': { x: 220, y: 240, category: 'person', color: '#10b981' },
+            'woman': { x: 220, y: 240, category: 'person', color: '#e11d48' },
             'boy': { x: 180, y: 180, category: 'person', color: '#10b981' },
             'girl': { x: 200, y: 260, category: 'person', color: '#10b981' },
             'rice': { x: 450, y: 300, category: 'food', color: '#ef4444' },
@@ -1240,8 +1237,8 @@
             // Vector positions
             const king = { x: 3, y: 1, label: 'king', labelOffset: { x: 10, y: -10 } };
             const man = { x: 1.5, y: 0, label: 'man', labelOffset: { x: 10, y: 15 } };
-            const woman = { x: 1.5, y: -2, label: 'woman', labelOffset: { x: 10, y: 20 } };
-            const queen = { x: 3, y: -1, label: 'queen', labelOffset: { x: 10, y: 20 } };
+            const woman = { x: 1.5, y: -2, label: 'woman', labelOffset: { x: 10, y: 30 } };
+            const queen = { x: 3, y: -1, label: 'queen', labelOffset: { x: 10, y: 35 } };
 
             // ALWAYS draw all base vectors in dotted gray (background)
             if (arithStep > 0) {
@@ -1282,45 +1279,39 @@
                 const result1Y = king.y - man.y;
 
                 // Highlight the base woman vector to show what we're adding
-                drawVectorSolid(vaCtx, centerX, centerY, woman.x * scale, woman.y * scale, '#10b981', '', 3, woman.labelOffset);
+                drawVectorSolid(vaCtx, centerX, centerY, woman.x * scale, woman.y * scale, '#e11d48', '', 3, woman.labelOffset);
 
                 drawVectorSolid(vaCtx, centerX, centerY, result1X * scale, result1Y * scale, '#cbd5e1', '', 2, { x: 10, y: -10 });
 
                 // Draw woman vector starting from result1's endpoint (operation)
                 drawVectorSolid(vaCtx, centerX + result1X * scale, centerY - result1Y * scale,
-                          woman.x * scale, woman.y * scale, '#10b981', '+ woman', 3, { x: 10, y: 20 });
+                          woman.x * scale, woman.y * scale, '#e11d48', '+ woman', 3, { x: 10, y: -15 });
 
                 const finalX = result1X + woman.x;
                 const finalY = result1Y + woman.y;
-                drawVectorSolid(vaCtx, centerX, centerY, finalX * scale, finalY * scale, '#2563eb', '', 4, { x: 10, y: 25 });
+                drawVectorSolid(vaCtx, centerX, centerY, finalX * scale, finalY * scale, '#2563eb', '', 4, { x: -65, y: 45 });
             } else if (arithStep === 5) {
-                // Show result compared with actual queen - highlight queen
+                // Show result compared with actual queen - they match!
                 const result1X = king.x - man.x;
                 const result1Y = king.y - man.y;
                 const finalX = result1X + woman.x;
                 const finalY = result1Y + woman.y;
 
                 // Highlight queen vector to show what we're comparing with
-                drawVectorSolid(vaCtx, centerX, centerY, queen.x * scale, queen.y * scale, '#10b981', '', 4, { x: 10, y: 25 });
+                drawVectorSolid(vaCtx, centerX, centerY, queen.x * scale, queen.y * scale, '#10b981', 'queen', 4, { x: 20, y: 40 });
 
-                drawVectorSolid(vaCtx, centerX, centerY, finalX * scale, finalY * scale, '#2563eb', '', 4, { x: -75, y: 25 });
+                // Draw result vector without label
+                drawVectorSolid(vaCtx, centerX, centerY, finalX * scale, finalY * scale, '#2563eb', '', 4, { x: -65, y: 50 });
 
-                // Draw similarity indicator with highlighting
+                // Draw similarity indicator line
                 vaCtx.strokeStyle = '#fbbf24';
-                vaCtx.lineWidth = 6;
+                vaCtx.lineWidth = 3;
                 vaCtx.setLineDash([8, 4]);
                 vaCtx.beginPath();
                 vaCtx.moveTo(centerX + finalX * scale, centerY - finalY * scale);
                 vaCtx.lineTo(centerX + queen.x * scale, centerY - queen.y * scale);
                 vaCtx.stroke();
                 vaCtx.setLineDash([]);
-
-                // Add "Very close!" text
-                vaCtx.fillStyle = '#f59e0b';
-                vaCtx.font = 'bold 14px Arial';
-                const midX = centerX + (finalX + queen.x) * scale / 2;
-                const midY = centerY - (finalY + queen.y) * scale / 2;
-                vaCtx.fillText('≈ Very Close!', midX - 40, midY - 10);
             }
 
             // Update status
@@ -1329,8 +1320,8 @@
                 'Step 1: Start with the "king" vector (blue)',
                 'Step 2: Reference "man" vector (green) for comparison',
                 'Step 3: Subtract "man" from "king" → represents "royalty without male gender"',
-                'Step 4: Add "woman" vector (green) → adds female gender attribute to result',
-                'Step 5: Compare result with "queen" (green)! Direction from man→woman equals king→queen'
+                'Step 4: Add "woman" vector (rose) → the result approximates the queen vector',
+                'Step 5: Compare result with actual "queen" vector (green) - very close match! The direction from man→woman equals king→queen'
             ];
 
             document.getElementById('arith-step-num').textContent = arithStep;
@@ -1405,14 +1396,16 @@
                 ctx.font = '12px Arial';
                 ctx.fillStyle = '#94a3b8'; // Slightly lighter gray for background labels
 
-                // Determine label position based on vector direction
-                let offsetX = 10;
+                // Determine label position based on vector direction and label
+                let offsetX = 15;
                 let offsetY = -10;
 
-                if (dy > 0) { // Vector pointing up
+                if (label === 'woman' || label === 'queen') {
+                    offsetY = 30; // Move down more for bottom vectors
+                } else if (dy > 0) { // Vector pointing up
                     offsetY = -15;
                 } else if (dy < 0) { // Vector pointing down
-                    offsetY = 20;
+                    offsetY = 25;
                 }
 
                 ctx.fillText(label, toX + offsetX, toY + offsetY);

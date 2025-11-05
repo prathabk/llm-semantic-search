@@ -337,6 +337,43 @@
             background: #e5e7eb;
             color: #374151;
         }
+
+        .data-document {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .data-document:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        #allDataContent {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #allDataContent::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #allDataContent::-webkit-scrollbar-track {
+            background: var(--bg);
+            border-radius: 4px;
+        }
+
+        #allDataContent::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        #allDataContent::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
     </style>
 </head>
 <body>
@@ -349,6 +386,31 @@
         </div>
 
         <div id="statusBanner" class="status-banner"></div>
+
+        <!-- Show All Data Option -->
+        <div class="query-section" style="margin-bottom: 20px;">
+            <div class="toggle-section" style="margin-top: 0;">
+                <div class="toggle-option">
+                    <input type="checkbox" id="showAllDataToggle" onchange="toggleAllData()">
+                    <div>
+                        <label for="showAllDataToggle">📋 Show All Data in Collection</label>
+                        <div class="description">
+                            Display all text entries currently stored in the Typesense collection
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Data Display (Hidden by default) -->
+        <div class="detail-section" id="allDataSection" style="display: none; margin-bottom: 24px;">
+            <h3><span class="section-icon">📚</span> All Collection Data</h3>
+            <div id="allDataContent">
+                <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                    Loading...
+                </div>
+            </div>
+        </div>
 
         <div class="query-section">
             <div class="form-group">
@@ -461,6 +523,10 @@
                 return;
             }
 
+            console.log('=== Executing Query ===');
+            console.log('Query:', query);
+            console.log('Generative:', generative);
+
             setLoading(true);
             document.getElementById('resultsContainer').style.display = 'none';
 
@@ -476,6 +542,12 @@
                 });
 
                 const result = await response.json();
+                console.log('=== Query Result ===');
+                console.log('Success:', result.success);
+                console.log('Found:', result.found);
+                console.log('Typesense params:', result.typesense_params);
+                console.log('Answer:', result.answer);
+                console.log('Full result:', result);
 
                 if (result.success) {
                     displayResults(result);
@@ -484,6 +556,7 @@
                     throw new Error(result.error);
                 }
             } catch (error) {
+                console.error('Query error:', error);
                 showStatus(`Error: ${error.message}`, 'error');
             } finally {
                 setLoading(false);
@@ -583,6 +656,89 @@
             }
         }
 
+        // Toggle all data display
+        async function toggleAllData() {
+            const checkbox = document.getElementById('showAllDataToggle');
+            const section = document.getElementById('allDataSection');
+            const content = document.getElementById('allDataContent');
+
+            if (checkbox.checked) {
+                section.style.display = 'block';
+                content.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);"><div class="loading-spinner" style="margin: 0 auto 12px;"></div>Loading all data...</div>';
+
+                try {
+                    console.log('Fetching all data from collection...');
+                    // Fetch all documents from collection using search with *
+                    const response = await fetch('/api/query', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            query: '*',
+                            generative: false,
+                            per_page: 250  // Typesense maximum limit per page
+                        })
+                    });
+
+                    console.log('Response status:', response.status);
+                    const result = await response.json();
+                    console.log('Result:', result);
+
+                    if (result.success && result.results && result.results.hits) {
+                        const hits = result.results.hits;
+
+                        if (hits.length === 0) {
+                            content.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">No data found in collection. Please run the Full Pipeline Demo first to populate data.</div>';
+                        } else {
+                            const totalFound = result.found || 0;
+                            const showing = hits.length;
+
+                            let statusMessage = '';
+                            if (showing < totalFound) {
+                                statusMessage = `<div style="margin-bottom: 12px; padding: 10px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; color: #92400e;">
+                                    ⚠️ Showing ${showing} of ${totalFound} documents (Typesense limit: 250 per page).
+                                    ${totalFound - showing} documents not displayed.
+                                </div>`;
+                            }
+
+                            let html = `<div style="margin-bottom: 16px; font-weight: 600; color: var(--text);">
+                                Total documents in collection: ${totalFound}
+                                ${showing < totalFound ? `<span style="color: var(--text-secondary); font-weight: 400;"> (Showing ${showing})</span>` : ''}
+                            </div>`;
+
+                            html += statusMessage;
+                            html += `<div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; line-height: 2;">`;
+
+                            hits.forEach((hit, index) => {
+                                const doc = hit.document;
+                                html += `<div style="color: var(--text); margin-bottom: 8px;">${doc.text}</div>`;
+                            });
+
+                            html += `</div>`;
+                            content.innerHTML = html;
+                        }
+                    } else {
+                        console.error('Error in result:', result);
+                        const errorMsg = result.error || 'Unknown error';
+                        content.innerHTML = `<div style="text-align: center; padding: 20px; color: #dc2626;">
+                            <strong>Error loading data:</strong><br>
+                            ${errorMsg}<br><br>
+                            <small>Please ensure Typesense is running and data is loaded via Full Pipeline Demo.</small>
+                        </div>`;
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    content.innerHTML = `<div style="text-align: center; padding: 20px; color: #dc2626;">
+                        <strong>Error:</strong> ${error.message}<br><br>
+                        <small>Please check the browser console for more details.</small>
+                    </div>`;
+                }
+            } else {
+                section.style.display = 'none';
+            }
+        }
+
         // Enter key to search
         document.getElementById('queryInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -590,14 +746,7 @@
             }
         });
 
-        // Check if data exists on load
-        fetch('/api/health')
-            .then(res => res.json())
-            .then(data => {
-                if (!data.typesense_healthy) {
-                    showStatus('Warning: Cannot connect to Typesense. Please ensure data is loaded.', 'warning');
-                }
-            });
+        // Health check removed - validation now happens only on query action
     </script>
 </body>
 </html>

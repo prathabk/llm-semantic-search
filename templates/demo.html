@@ -192,14 +192,6 @@
             </p>
         </div>
 
-        <div class="intro-section">
-            <h3>💡 Choose Your Learning Path</h3>
-            <p>
-                Start with the <strong>Full Pipeline Demo</strong> to see the complete workflow,
-                or jump directly to the <strong>Query Demo</strong> if data is already loaded.
-            </p>
-        </div>
-
         <div class="demos-list">
             <!-- Full Pipeline Demo -->
             <a href="/demo/full" class="demo-item">
@@ -208,7 +200,6 @@
                     <div>
                         <h2>
                             Full Pipeline Demo
-                            <span class="status-badge recommended">Recommended</span>
                         </h2>
                         <div class="subtitle">Complete end-to-end workflow</div>
                     </div>
@@ -218,13 +209,6 @@
                     Input unstructured text, watch it get structured by an LLM, store it in Typesense,
                     and query it with natural language. Perfect for understanding how all the pieces fit together.
                 </p>
-                <div class="demo-features">
-                    <span class="feature-tag">📝 Data Input</span>
-                    <span class="feature-tag">🤖 LLM Structuring</span>
-                    <span class="feature-tag">💾 Database Storage</span>
-                    <span class="feature-tag">🔍 Natural Language Query</span>
-                    <span class="feature-tag">📊 Visual Progress</span>
-                </div>
             </a>
 
             <!-- Query Only Demo -->
@@ -234,7 +218,6 @@
                     <div>
                         <h2>
                             Query Demo
-                            <span class="status-badge live">Live</span>
                         </h2>
                         <div class="subtitle">Focused search experience</div>
                     </div>
@@ -244,13 +227,6 @@
                     and see how they're translated into database filters. View results with highlighted answers,
                     matching documents, and detailed query explanations.
                 </p>
-                <div class="demo-features">
-                    <span class="feature-tag">⚡ Fast Queries</span>
-                    <span class="feature-tag">💬 Natural Language</span>
-                    <span class="feature-tag">📄 Document Cards</span>
-                    <span class="feature-tag">🔧 Filter Translation</span>
-                    <span class="feature-tag">📋 Example Queries</span>
-                </div>
             </a>
 
             <!-- Techniques Comparison Demo -->
@@ -260,7 +236,6 @@
                     <div>
                         <h2>
                             Similarity Techniques Comparison
-                            <span class="status-badge live">Live</span>
                         </h2>
                         <div class="subtitle">Compare search algorithms side by side</div>
                     </div>
@@ -270,34 +245,26 @@
                     See how each technique ranks the same documents differently, understand their strengths and weaknesses,
                     and learn which method works best for your use case.
                 </p>
-                <div class="demo-features">
-                    <span class="feature-tag">🎯 Jaccard Similarity</span>
-                    <span class="feature-tag">📐 Cosine Similarity</span>
-                    <span class="feature-tag">⚖️ TF-IDF</span>
-                    <span class="feature-tag">✏️ Levenshtein</span>
-                    <span class="feature-tag">📊 Side-by-Side Results</span>
-                </div>
             </a>
-        </div>
 
-        <div class="demo-grid">
-            <div class="quick-action">
-                <div class="icon">📚</div>
-                <h4>Sample Data Included</h4>
-                <p>Pre-configured examples ready to use</p>
-            </div>
-
-            <div class="quick-action">
-                <div class="icon">🎯</div>
-                <h4>Model Selection</h4>
-                <p>Choose from 3 Gemma3 model sizes</p>
-            </div>
-
-            <div class="quick-action">
-                <div class="icon">⚙️</div>
-                <h4>Fully Modular</h4>
-                <p>Reusable components and services</p>
-            </div>
+            <!-- Chunking Strategies Demo -->
+            <a href="/demo/chunking" class="demo-item">
+                <div class="demo-item-header">
+                    <div class="demo-icon">✂️</div>
+                    <div>
+                        <h2>
+                            Interactive Chunking Demo
+                        </h2>
+                        <div class="subtitle">Compare chunking strategies with real Q&A</div>
+                    </div>
+                </div>
+                <p class="demo-description">
+                    Explore how different text chunking strategies (Sentence-Based, Sliding Window, Semantic)
+                    affect question answering quality. Store chunks in Typesense using your chosen strategy,
+                    then ask questions and see how retrieval quality varies. Uses Ollama for semantic chunking
+                    and answer generation.
+                </p>
+            </a>
         </div>
     </div>
 </body>

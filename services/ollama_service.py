@@ -126,6 +126,25 @@ Return ONLY valid JSON, no explanations or markdown. If a field is not mentioned
         Returns:
             Dictionary with filter_by and q parameters for Typesense
         """
+        # Detect meta-analytical queries that need all data
+        query_lower = query.lower()
+        meta_patterns = [
+            'how many colors', 'how many foods', 'what colors', 'what foods',
+            'list all colors', 'list all foods', 'show all colors', 'show all foods',
+            'colors are mentioned', 'foods are mentioned', 'colors mentioned', 'foods mentioned',
+            'distinct colors', 'distinct foods', 'unique colors', 'unique foods',
+            'different colors', 'different foods'
+        ]
+
+        # If it's a meta-analytical query, return all documents
+        if any(pattern in query_lower for pattern in meta_patterns):
+            print(f"Meta-analytical query detected: {query}")
+            return {
+                "q": "*",
+                "filter_by": "",
+                "natural_answer": f"analysis of all data to answer: {query}"
+            }
+
         prompt = f"""You are a query translator. Convert natural language queries into Typesense search filters.
 
 AVAILABLE FIELDS (use exactly these names):
@@ -143,7 +162,8 @@ RULES:
 3. Combine filters with &&
 4. For food/color queries, use likes_food or likes_color
 5. For gender queries, use "boy" or "girl"
-6. If no specific filter needed, use q with keywords
+6. For counting/listing queries about specific attributes, use appropriate filter
+7. For aggregate queries (how many distinct X), fetch all documents with q="*" and filter_by=""
 
 Return ONLY valid JSON:
 {{
@@ -167,6 +187,9 @@ Query: "find people who like curd rice"
 
 Query: "list all boys"
 {{"q": "*", "filter_by": "gender:=boy", "natural_answer": "all boys"}}
+
+Query: "list all people"
+{{"q": "*", "filter_by": "", "natural_answer": "all people in the database"}}
 
 Now process: "{query}"
 Return JSON only, no explanation:"""
@@ -288,6 +311,9 @@ Instructions:
 - If asked "how many", provide count with details (e.g., "1 boy" or "3 boys and 2 girls")
 - If asked "who" or "list names", list the names clearly
 - If asked about preferences, describe what they like
+- If asked about colors/foods mentioned, analyze all results and count unique values
+- For "how many colors mentioned", count distinct colors from likes_color field
+- For "how many foods mentioned", count distinct foods from likes_food field
 - Be concise but informative
 - Use natural language
 
@@ -313,6 +339,38 @@ Answer:"""
             if names:
                 return f"Found {found_count} result(s): {', '.join(names)}"
             return f"Found {found_count} matching documents"
+
+    def generate_text(self, prompt: str, max_tokens: int = 500) -> str:
+        """
+        Generate text using Ollama model
+
+        Args:
+            prompt: The prompt for text generation
+            max_tokens: Maximum tokens to generate
+
+        Returns:
+            Generated text
+        """
+        try:
+            # Call Ollama CLI
+            result = subprocess.run(
+                ['ollama', 'run', self.model, prompt],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+
+            if result.returncode != 0:
+                raise Exception(f"Ollama error: {result.stderr}")
+
+            # Return generated text
+            response = result.stdout.strip()
+            return response
+
+        except subprocess.TimeoutExpired:
+            raise Exception("Ollama request timed out")
+        except Exception as e:
+            raise Exception(f"Text generation failed: {str(e)}")
 
     @staticmethod
     def check_ollama_availability() -> Dict[str, Any]:

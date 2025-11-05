@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chunking Strategies Demo - Semantic Search</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .demo-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 16px;
+        }
+
+        .demo-section {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .demo-section h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--primary);
+            font-size: 1.5em;
+        }
+
+        .story-box {
+            background: var(--bg);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            margin-bottom: 20px;
+            font-family: 'Georgia', serif;
+            line-height: 1.8;
+        }
+
+        .strategy-selector {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .strategy-btn {
+            padding: 12px 24px;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .strategy-btn:hover {
+            border-color: var(--primary);
+        }
+
+        .strategy-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .strategy-btn.sentence {
+            border-color: #10b981;
+        }
+
+        .strategy-btn.sentence.active {
+            background: #10b981;
+        }
+
+        .strategy-btn.sliding {
+            border-color: #2563eb;
+        }
+
+        .strategy-btn.sliding.active {
+            background: #2563eb;
+        }
+
+        .strategy-btn.semantic {
+            border-color: #8b5cf6;
+        }
+
+        .strategy-btn.semantic.active {
+            background: #8b5cf6;
+        }
+
+        .action-btn {
+            padding: 14px 32px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .action-btn:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+        }
+
+        .chunks-display {
+            margin-top: 24px;
+        }
+
+        .chunk-item {
+            background: var(--bg);
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .chunk-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .chunk-label {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .chunk-metadata {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+
+        .chunk-text {
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .query-section {
+            margin-top: 32px;
+        }
+
+        .query-input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .query-input-group input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        .query-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .example-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .example-question {
+            padding: 6px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            font-size: 0.875em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-question:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .answer-display {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border: 2px solid #059669;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .answer-text {
+            font-size: 1.1em;
+            line-height: 1.7;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .retrieved-chunks {
+            margin-top: 20px;
+        }
+
+        .retrieved-chunks h3 {
+            font-size: 1em;
+            margin: 0 0 12px 0;
+            color: #065f46;
+        }
+
+        .retrieved-chunk {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            font-size: 0.9em;
+            border-left: 3px solid #059669;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .status-message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #059669;
+        }
+
+        .status-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #dc2626;
+        }
+
+        .status-message.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #2563eb;
+        }
+
+        .info-box {
+            background: #e0e7ff;
+            border-left: 4px solid #6366f1;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            margin: 0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <a href="/chunking" class="home-link">← Back to Chunking Concepts</a>
+
+        <div class="demo-header">
+            <h1>✂️ Interactive Chunking Demo</h1>
+            <p class="subtitle">Compare how different chunking strategies affect question answering</p>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="demo-section" style="background: white; border: 2px solid var(--border);">
+            <h2>📊 How This Demo Works</h2>
+
+            <div style="text-align: center; padding: 40px 20px; background: white;">
+                <svg width="100%" height="500" viewBox="0 0 1100 500" style="max-width: 1100px; margin: 0 auto; background: white;">
+                    <!-- Step 1: Text Input -->
+                    <rect x="50" y="60" width="170" height="90" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+                    <text x="135" y="95" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e40af">📄 Story Text</text>
+                    <text x="135" y="120" text-anchor="middle" font-size="13" fill="#1e40af">"Quantum Discovery"</text>
+
+                    <!-- Arrow 1 with label -->
+                    <path d="M 220 105 L 300 105" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrowblue)"/>
+                    <rect x="235" y="75" width="50" height="20" rx="10" fill="#2563eb"/>
+                    <text x="260" y="89" text-anchor="middle" font-size="12" font-weight="bold" fill="white">1</text>
+                    <text x="260" y="70" text-anchor="middle" font-size="12" font-weight="bold" fill="#2563eb">Select Strategy</text>
+
+                    <!-- Step 2: Chunking Service -->
+                    <rect x="300" y="30" width="200" height="150" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="3"/>
+                    <text x="400" y="60" text-anchor="middle" font-size="16" font-weight="bold" fill="#92400e">✂️ Chunking Service</text>
+
+                    <rect x="315" y="75" width="170" height="30" rx="6" fill="#fde68a" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="400" y="96" text-anchor="middle" font-size="12" font-weight="600" fill="#92400e">📝 Sentence-Based</text>
+
+                    <rect x="315" y="110" width="170" height="30" rx="6" fill="#bfdbfe" stroke="#2563eb" stroke-width="2"/>
+                    <text x="400" y="131" text-anchor="middle" font-size="12" font-weight="600" fill="#1e40af">🪟 Sliding Window</text>
+
+                    <rect x="315" y="145" width="170" height="30" rx="6" fill="#ddd6fe" stroke="#8b5cf6" stroke-width="2"/>
+                    <text x="400" y="166" text-anchor="middle" font-size="12" font-weight="600" fill="#5b21b6">🧠 Semantic (LLM)</text>
+
+                    <!-- Arrow 2 with label -->
+                    <path d="M 500 105 L 580 105" stroke="#f59e0b" stroke-width="3" fill="none" marker-end="url(#arroworange)"/>
+                    <rect x="515" y="75" width="50" height="20" rx="10" fill="#f59e0b"/>
+                    <text x="540" y="89" text-anchor="middle" font-size="12" font-weight="bold" fill="white">2</text>
+                    <text x="540" y="70" text-anchor="middle" font-size="12" font-weight="bold" fill="#f59e0b">Chunks</text>
+
+                    <!-- Step 3: Typesense Storage -->
+                    <rect x="580" y="60" width="170" height="90" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="3"/>
+                    <text x="665" y="95" text-anchor="middle" font-size="16" font-weight="bold" fill="#065f46">💾 Typesense</text>
+                    <text x="665" y="120" text-anchor="middle" font-size="13" fill="#065f46">Collection:</text>
+                    <text x="665" y="138" text-anchor="middle" font-size="13" font-weight="600" fill="#065f46">llm-chunking</text>
+
+                    <!-- Arrow 3 - down from Typesense -->
+                    <path d="M 665 150 L 665 240" stroke="#059669" stroke-width="3" fill="none" marker-end="url(#arrowgreen)"/>
+                    <rect x="640" y="185" width="50" height="20" rx="10" fill="#059669"/>
+                    <text x="665" y="199" text-anchor="middle" font-size="12" font-weight="bold" fill="white">3</text>
+                    <text x="710" y="195" text-anchor="middle" font-size="12" font-weight="bold" fill="#059669">Store</text>
+
+                    <!-- Step 4: User Question -->
+                    <rect x="50" y="310" width="170" height="90" rx="10" fill="#e0e7ff" stroke="#6366f1" stroke-width="3"/>
+                    <text x="135" y="345" text-anchor="middle" font-size="16" font-weight="bold" fill="#4338ca">❓ Question</text>
+                    <text x="135" y="370" text-anchor="middle" font-size="13" fill="#4338ca">"How long did</text>
+                    <text x="135" y="388" text-anchor="middle" font-size="13" fill="#4338ca">she work on it?"</text>
+
+                    <!-- Arrow 4 - from Question to Search -->
+                    <path d="M 220 345 L 280 345 L 280 285 L 580 285" stroke="#6366f1" stroke-width="3" fill="none" marker-end="url(#arrowpurple)"/>
+                    <rect x="370" y="325" width="50" height="20" rx="10" fill="#6366f1"/>
+                    <text x="395" y="339" text-anchor="middle" font-size="12" font-weight="bold" fill="white">4</text>
+                    <text x="395" y="318" text-anchor="middle" font-size="12" font-weight="bold" fill="#6366f1">Search Query</text>
+
+                    <!-- Step 5: Semantic Search -->
+                    <rect x="580" y="240" width="170" height="90" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="3"/>
+                    <text x="665" y="275" text-anchor="middle" font-size="16" font-weight="bold" fill="#065f46">🔍 Semantic Search</text>
+                    <text x="665" y="300" text-anchor="middle" font-size="13" fill="#065f46">Top 5 Relevant</text>
+                    <text x="665" y="318" text-anchor="middle" font-size="13" fill="#065f46">Chunks</text>
+
+                    <!-- Arrow 5 - from Search to LLM -->
+                    <path d="M 750 285 L 830 285" stroke="#059669" stroke-width="3" fill="none" marker-end="url(#arrowgreen)"/>
+                    <rect x="765" y="255" width="50" height="20" rx="10" fill="#059669"/>
+                    <text x="790" y="269" text-anchor="middle" font-size="12" font-weight="bold" fill="white">5</text>
+                    <text x="790" y="250" text-anchor="middle" font-size="12" font-weight="bold" fill="#059669">Context</text>
+
+                    <!-- Step 6: LLM Answer Generation -->
+                    <rect x="830" y="240" width="200" height="90" rx="10" fill="#fce7f3" stroke="#ec4899" stroke-width="3"/>
+                    <text x="930" y="275" text-anchor="middle" font-size="16" font-weight="bold" fill="#be185d">🤖 Ollama (Gemma)</text>
+                    <text x="930" y="300" text-anchor="middle" font-size="13" fill="#be185d">Generate Answer</text>
+                    <text x="930" y="318" text-anchor="middle" font-size="13" fill="#be185d">from Context</text>
+
+                    <!-- Arrow 6 - from LLM back to Question -->
+                    <path d="M 930 330 L 930 420 L 135 420 L 135 400" stroke="#ec4899" stroke-width="3" fill="none" marker-end="url(#arrowpink)"/>
+                    <rect x="505" y="410" width="50" height="20" rx="10" fill="#ec4899"/>
+                    <text x="530" y="424" text-anchor="middle" font-size="12" font-weight="bold" fill="white">6</text>
+                    <text x="530" y="455" text-anchor="middle" font-size="12" font-weight="bold" fill="#ec4899">Natural Language Answer + Retrieved Chunks</text>
+
+                    <!-- Arrow markers -->
+                    <defs>
+                        <marker id="arrowblue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#2563eb" />
+                        </marker>
+                        <marker id="arroworange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#f59e0b" />
+                        </marker>
+                        <marker id="arrowgreen" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#059669" />
+                        </marker>
+                        <marker id="arrowpurple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#6366f1" />
+                        </marker>
+                        <marker id="arrowpink" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#ec4899" />
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px;">
+                <div style="background: rgba(37, 99, 235, 0.1); padding: 12px; border-radius: 6px; border-left: 3px solid #2563eb;">
+                    <strong style="color: #1e40af;">1. Input & Strategy</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.9em; color: var(--text-secondary);">User selects chunking method</p>
+                </div>
+                <div style="background: rgba(245, 158, 11, 0.1); padding: 12px; border-radius: 6px; border-left: 3px solid #f59e0b;">
+                    <strong style="color: #92400e;">2. Text Chunking</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.9em; color: var(--text-secondary);">Backend splits text into chunks</p>
+                </div>
+                <div style="background: rgba(5, 150, 105, 0.1); padding: 12px; border-radius: 6px; border-left: 3px solid #059669;">
+                    <strong style="color: #065f46;">3. Storage</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.9em; color: var(--text-secondary);">Chunks stored in Typesense</p>
+                </div>
+                <div style="background: rgba(99, 102, 241, 0.1); padding: 12px; border-radius: 6px; border-left: 3px solid #6366f1;">
+                    <strong style="color: #4338ca;">4. Question</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.9em; color: var(--text-secondary);">User asks natural language question</p>
+                </div>
+                <div style="background: rgba(5, 150, 105, 0.1); padding: 12px; border-radius: 6px; border-left: 3px solid #059669;">
+                    <strong style="color: #065f46;">5. Semantic Search</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.9em; color: var(--text-secondary);">Typesense finds relevant chunks</p>
+                </div>
+                <div style="background: rgba(236, 72, 153, 0.1); padding: 12px; border-radius: 6px; border-left: 3px solid #ec4899;">
+                    <strong style="color: #be185d;">6. Answer Generation</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 0.9em; color: var(--text-secondary);">LLM generates natural answer</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Story & Strategy Selection -->
+        <div class="demo-section">
+            <h2>Step 1: Select Chunking Strategy</h2>
+
+            <div class="info-box">
+                <p><strong>Sample Story:</strong> "The AI Language Breakthrough" - An Indian research success story</p>
+            </div>
+
+            <div class="story-box" id="storyText">
+                Dr. Lakshmi Venkataraman arrived at the IIT Bombay AI lab early morning, her chai still warm in the cool Mumbai air. She had been working on the neural language model for eighteen months without a breakthrough. Today felt different. The training results from last night showed an unprecedented improvement in understanding regional languages. The model was translating between Hindi, Tamil, and Bengali with accuracy far beyond Google's predictions. She quickly called her colleague, Dr. Pushpak Bhattacharyya, who specialized in natural language processing. He arrived within the hour, his excitement matching hers. Together, they spent the entire afternoon analyzing the results, running validation tests, and checking for training errors. By evening, they were certain: they had developed a breakthrough in multilingual AI. The implications were tremendous - this could help millions access information in their native languages. They immediately began drafting their paper for Nature Machine Intelligence.
+            </div>
+
+            <div class="strategy-selector">
+                <button class="strategy-btn sentence active" onclick="selectStrategy('sentence')">
+                    📝 Sentence-Based<br>
+                    <span style="font-size: 0.75em; font-weight: normal;">Group 3 sentences</span>
+                </button>
+                <button class="strategy-btn sliding" onclick="selectStrategy('sliding')">
+                    🪟 Sliding Window<br>
+                    <span style="font-size: 0.75em; font-weight: normal;">Overlapping chunks</span>
+                </button>
+                <button class="strategy-btn semantic" onclick="selectStrategy('semantic')">
+                    🧠 Semantic<br>
+                    <span style="font-size: 0.75em; font-weight: normal;">AI-driven topics</span>
+                </button>
+            </div>
+
+            <button class="action-btn" id="storeBtn" onclick="storeChunks()">
+                🗄️ Store Chunks in Typesense
+            </button>
+
+            <div id="statusMessage"></div>
+
+            <div id="chunksDisplay" class="chunks-display" style="display: none;"></div>
+        </div>
+
+        <!-- Step 2: Query Section -->
+        <div class="demo-section" id="querySection" style="display: none;">
+            <h2>Step 2: Ask Questions</h2>
+
+            <p style="margin-bottom: 16px;">Ask questions about the story. The system will retrieve relevant chunks and generate an answer.</p>
+
+            <div class="example-questions">
+                <strong style="margin-right: 8px;">Example questions:</strong>
+                <span class="example-question" onclick="askQuestion('How long had Dr. Venkataraman been working on the language model?')">How long had Dr. Venkataraman been working?</span>
+                <span class="example-question" onclick="askQuestion('Who helped validate the results?')">Who helped validate the results?</span>
+                <span class="example-question" onclick="askQuestion('What languages did the model translate between?')">What languages were supported?</span>
+                <span class="example-question" onclick="askQuestion('Where did they plan to publish?')">Where did they plan to publish?</span>
+            </div>
+
+            <div class="query-input-group">
+                <input type="text" id="questionInput" placeholder="Type your question about the story..." />
+                <button class="action-btn" onclick="askCustomQuestion()">🔍 Ask</button>
+            </div>
+
+            <div id="answerDisplay"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedStrategy = 'sentence';
+        let storedChunks = [];
+
+        const STORY = "Dr. Lakshmi Venkataraman arrived at the IIT Bombay AI lab early morning, her chai still warm in the cool Mumbai air. She had been working on the neural language model for eighteen months without a breakthrough. Today felt different. The training results from last night showed an unprecedented improvement in understanding regional languages. The model was translating between Hindi, Tamil, and Bengali with accuracy far beyond Google's predictions. She quickly called her colleague, Dr. Pushpak Bhattacharyya, who specialized in natural language processing. He arrived within the hour, his excitement matching hers. Together, they spent the entire afternoon analyzing the results, running validation tests, and checking for training errors. By evening, they were certain: they had developed a breakthrough in multilingual AI. The implications were tremendous - this could help millions access information in their native languages. They immediately began drafting their paper for Nature Machine Intelligence.";
+
+        function selectStrategy(strategy) {
+            selectedStrategy = strategy;
+
+            // Update button states
+            document.querySelectorAll('.strategy-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.strategy-btn').classList.add('active');
+        }
+
+        async function storeChunks() {
+            const storeBtn = document.getElementById('storeBtn');
+            const statusMessage = document.getElementById('statusMessage');
+            const chunksDisplay = document.getElementById('chunksDisplay');
+
+            // Clear previous query results
+            document.getElementById('questionInput').value = '';
+            document.getElementById('answerDisplay').innerHTML = '';
+
+            // Disable button and show loading
+            storeBtn.disabled = true;
+            storeBtn.textContent = '⏳ Processing...';
+            statusMessage.innerHTML = '<div class="loading"><div class="spinner"></div>Chunking text and storing in Typesense...</div>';
+
+            try {
+                const response = await fetch('/api/chunking/store', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: STORY,
+                        strategy: selectedStrategy,
+                        model: 'gemma3:1b'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    storedChunks = data.chunks;
+
+                    // Show success message
+                    statusMessage.innerHTML = `
+                        <div class="status-message success">
+                            ✅ Successfully stored ${data.count} chunks using <strong>${selectedStrategy}</strong> strategy!
+                        </div>
+                    `;
+
+                    // Display chunks
+                    displayChunks(data.chunks);
+
+                    // Enable query section
+                    document.getElementById('querySection').style.display = 'block';
+                    document.getElementById('querySection').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    statusMessage.innerHTML = `
+                        <div class="status-message error">
+                            ❌ Error: ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                statusMessage.innerHTML = `
+                    <div class="status-message error">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+            } finally {
+                // Re-enable button
+                storeBtn.disabled = false;
+                storeBtn.textContent = '🗄️ Store Chunks in Typesense';
+            }
+        }
+
+        function displayChunks(chunks) {
+            const chunksDisplay = document.getElementById('chunksDisplay');
+            chunksDisplay.style.display = 'block';
+
+            let html = '<h3>Stored Chunks:</h3>';
+
+            chunks.forEach((chunk, index) => {
+                html += `
+                    <div class="chunk-item">
+                        <div class="chunk-header">
+                            <span class="chunk-label">Chunk ${index + 1}</span>
+                            <span class="chunk-metadata">${chunk.metadata}</span>
+                        </div>
+                        <div class="chunk-text">${chunk.text}</div>
+                    </div>
+                `;
+            });
+
+            chunksDisplay.innerHTML = html;
+        }
+
+        function askQuestion(question) {
+            document.getElementById('questionInput').value = question;
+            askCustomQuestion();
+        }
+
+        async function askCustomQuestion() {
+            const question = document.getElementById('questionInput').value.trim();
+            const answerDisplay = document.getElementById('answerDisplay');
+
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+
+            // Show loading
+            answerDisplay.innerHTML = '<div class="loading"><div class="spinner"></div>Searching chunks and generating answer...</div>';
+
+            try {
+                const response = await fetch('/api/chunking/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question: question
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayAnswer(data);
+                } else {
+                    answerDisplay.innerHTML = `
+                        <div class="status-message error">
+                            ❌ Error: ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                answerDisplay.innerHTML = `
+                    <div class="status-message error">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayAnswer(data) {
+            const answerDisplay = document.getElementById('answerDisplay');
+
+            let html = `
+                <div class="answer-display">
+                    <h3 style="margin-top: 0; color: #065f46;">❓ Question: ${data.question}</h3>
+                    <div class="answer-text">
+                        <strong>Answer:</strong> ${data.answer}
+                    </div>
+
+                    <div class="retrieved-chunks">
+                        <h3>📚 Retrieved Chunks (Top ${data.chunks.length}):</h3>
+                        ${data.chunks.map((chunk, idx) => `
+                            <div class="retrieved-chunk">
+                                <div style="font-weight: 600; margin-bottom: 4px; color: #065f46;">
+                                    Chunk ${chunk.chunk_id} - ${chunk.metadata}
+                                </div>
+                                <div>${chunk.text}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            answerDisplay.innerHTML = html;
+        }
+
+        // Allow Enter key to submit question
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('questionInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    askCustomQuestion();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
