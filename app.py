@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import os
 from services import OllamaService, TypesenseService
+from services.similarity_service import SimilarityService
 
 app = Flask(__name__)
 
@@ -64,6 +65,11 @@ def demo_full():
 def demo_query():
     """Query-only demo - focused search experience"""
     return render_template('demo_query.html')
+
+@app.route('/demo/techniques')
+def demo_techniques():
+    """Similarity techniques comparison demo"""
+    return render_template('demo_techniques.html')
 
 # API Endpoints
 
@@ -247,6 +253,44 @@ def query_search():
             'answer': answer,
             'found': found_count,
             'generative': generative
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/compare-techniques', methods=['POST'])
+def compare_techniques():
+    """Compare different similarity techniques"""
+    try:
+        data = request.json
+        query = data.get('query', '')
+        documents = data.get('documents', None)
+
+        if not query:
+            return jsonify({'success': False, 'error': 'No query provided'}), 400
+
+        # Get results from all techniques
+        results = SimilarityService.compare_all_methods(query, documents)
+
+        # Get method information
+        method_info = SimilarityService.get_method_info()
+
+        return jsonify({
+            'success': True,
+            'query': query,
+            'results': results,
+            'method_info': method_info,
+            'documents': documents if documents else SimilarityService.SAMPLE_DOCUMENTS
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/sample-documents', methods=['GET'])
+def get_sample_documents():
+    """Get sample documents for similarity comparison"""
+    try:
+        return jsonify({
+            'success': True,
+            'documents': SimilarityService.SAMPLE_DOCUMENTS
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
