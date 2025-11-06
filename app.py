@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import os
+import time
 from services import OllamaService, TypesenseService
 from services.similarity_service import SimilarityService
 
@@ -46,6 +47,11 @@ def vector_database():
     """Vector database (Typesense) explanation page"""
     return render_template('vector_database.html')
 
+@app.route('/vector-database-slides')
+def vector_database_slides():
+    """Typesense vector database slide presentation"""
+    return render_template('vector_database_slides.html')
+
 @app.route('/semantic-search')
 def semantic_search():
     """Semantic search demonstration page"""
@@ -80,6 +86,21 @@ def chunking():
 def demo_chunking():
     """Interactive chunking strategies demo with Typesense"""
     return render_template('demo_chunking.html')
+
+@app.route('/demo/chunking-strategies')
+def demo_chunking_strategies():
+    """Focused demo comparing all chunking strategies with Puducherry example"""
+    return render_template('demo_chunking_strategies.html')
+
+@app.route('/demo/typesense')
+def demo_typesense():
+    """Typesense vector similarity search demo"""
+    return render_template('demo_typesense.html')
+
+@app.route('/demo/typesense-gemma')
+def demo_typesense_gemma():
+    """Typesense similarity search demo with explicit Gemma embeddings"""
+    return render_template('demo_typesense_gemma.html')
 
 # API Endpoints
 
@@ -494,6 +515,434 @@ Answer:"""
             'found': len(hits)
         })
     except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/typesense-demo/index', methods=['POST'])
+def typesense_demo_index():
+    """Index documents with auto-embeddings for similarity search demo"""
+    try:
+        data = request.json
+        documents = data.get('documents', [])
+        mode = data.get('mode', 'clear')  # 'clear' or 'append'
+
+        if not documents:
+            return jsonify({'success': False, 'error': 'No documents provided'}), 400
+
+        # Initialize Typesense service
+        ts = TypesenseService(
+            host=TYPESENSE_HOST,
+            port=TYPESENSE_PORT,
+            api_key=TYPESENSE_API_KEY,
+            collection_name='llm_semsim'
+        )
+
+        # Create or check collection based on mode
+        if mode == 'clear':
+            # Clear & Store: Recreate collection with auto-embedding
+            ts.create_auto_embedding_collection(model_name='ts/all-MiniLM-L12-v2')
+        else:
+            # Append: Check if collection exists, create if not
+            try:
+                ts.get_collection_info()
+            except:
+                # Collection doesn't exist, create it
+                ts.create_auto_embedding_collection(model_name='ts/all-MiniLM-L12-v2')
+
+        # Prepare documents (no need to generate embeddings manually!)
+        docs_to_insert = []
+        for i, text in enumerate(documents):
+            docs_to_insert.append({
+                'id': str(int(time.time() * 1000) + i),  # Unique ID using timestamp
+                'text': text
+                # Typesense will automatically generate embeddings!
+            })
+
+        # Insert documents
+        result = ts.insert_documents(docs_to_insert)
+
+        # Get total document count
+        collection_info = ts.get_collection_info()
+        total_docs = collection_info.get('num_documents', len(documents))
+
+        # Generate Python code snippet
+        mode_comment = "# Mode: Clear & Store - Recreates collection" if mode == 'clear' else "# Mode: Append - Adds to existing collection"
+        code_snippet = f"""# Index documents in Typesense with auto-embeddings
+{mode_comment}
+# Typesense automatically generates embeddings using built-in model!
+import requests
+import json
+import time
+
+documents = {documents}
+
+# Prepare documents (Typesense will auto-generate embeddings)
+docs_to_insert = []
+for i, text in enumerate(documents):
+    docs_to_insert.append({{
+        'id': str(int(time.time() * 1000) + i),
+        'text': text
+        # No embedding field needed - Typesense does it automatically!
+    }})
+
+# Import documents to Typesense
+import_data = '\\n'.join([json.dumps(doc) for doc in docs_to_insert])
+
+response = requests.post(
+    'http://{TYPESENSE_HOST}:{TYPESENSE_PORT}/collections/llm_semsim/documents/import',
+    headers={{'X-TYPESENSE-API-KEY': '{TYPESENSE_API_KEY}'}},
+    data=import_data
+)
+
+print(f"Indexed {{len(documents)}} documents")
+print(f"Total documents in collection: {total_docs}")
+print("Embeddings generated automatically by Typesense!")"""
+
+        return jsonify({
+            'success': True,
+            'count': len(documents),
+            'total_docs': total_docs,
+            'mode': mode,
+            'model': 'ts/all-MiniLM-L12-v2',
+            'code': code_snippet
+        })
+
+    except Exception as e:
+        print(f"Error in typesense_demo_index: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/typesense-demo/search', methods=['POST'])
+def typesense_demo_search():
+    """Search documents using semantic similarity with auto-embeddings"""
+    try:
+        data = request.json
+        query = data.get('query', '')
+
+        if not query:
+            return jsonify({'success': False, 'error': 'No query provided'}), 400
+
+        # Initialize Typesense service
+        ts = TypesenseService(
+            host=TYPESENSE_HOST,
+            port=TYPESENSE_PORT,
+            api_key=TYPESENSE_API_KEY,
+            collection_name='llm_semsim'
+        )
+
+        # Perform semantic search (Typesense auto-generates query embedding!)
+        search_results = ts.semantic_search(query, k=5)
+
+        # Extract results with scores
+        results = []
+        for hit in search_results.get('hits', []):
+            doc = hit['document']
+            # Vector distance is returned in vector_distance field
+            # Convert to similarity score (1 / (1 + distance))
+            distance = hit.get('vector_distance', 0)
+            similarity_score = 1 / (1 + distance)
+
+            results.append({
+                'text': doc['text'],
+                'score': similarity_score,
+                'distance': distance
+            })
+
+        # Generate Python code snippet
+        code_snippet = f"""# Search documents using semantic similarity
+# Typesense automatically generates embeddings for your query!
+import requests
+
+query = "{query}"
+
+# Search in Typesense (auto-generates query embedding)
+response = requests.get(
+    'http://{TYPESENSE_HOST}:{TYPESENSE_PORT}/collections/llm_semsim/documents/search',
+    headers={{'X-TYPESENSE-API-KEY': '{TYPESENSE_API_KEY}'}},
+    params={{
+        'q': query,
+        'query_by': 'embedding',
+        'exclude_fields': 'embedding',
+        'per_page': 5
+    }}
+)
+
+results = response.json()
+print(f"Found {{results['found']}} results")
+
+for hit in results['hits']:
+    distance = hit.get('vector_distance', 0)
+    score = 1 / (1 + distance)
+    print(f"Score: {{score:.3f}} - {{hit['document']['text']}}")"""
+
+        return jsonify({
+            'success': True,
+            'results': results,
+            'found': len(results),
+            'code': code_snippet,
+            'raw_response': search_results
+        })
+
+    except Exception as e:
+        print(f"Error in typesense_demo_search: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/typesense-gemma/index', methods=['POST'])
+def typesense_gemma_index():
+    """Index documents with explicit Ollama embedding model"""
+    try:
+        data = request.json
+        documents = data.get('documents', [])
+        mode = data.get('mode', 'clear')  # 'clear' or 'append'
+        model = data.get('model', 'nomic-embed-text')  # Selected embedding model
+
+        if not documents:
+            return jsonify({'success': False, 'error': 'No documents provided'}), 400
+
+        # Initialize services
+        ollama = OllamaService(model=model)
+        ts = TypesenseService(
+            host=TYPESENSE_HOST,
+            port=TYPESENSE_PORT,
+            api_key=TYPESENSE_API_KEY,
+            collection_name='llm_semsim_gemma'
+        )
+
+        # Generate first embedding to get dimension
+        print(f"Generating embedding with model: {model}")
+        first_embedding = ollama.generate_embedding(documents[0], model=model)
+        embedding_dim = len(first_embedding)
+        print(f"Embedding dimension: {embedding_dim}")
+
+        # Create or check collection based on mode
+        if mode == 'clear':
+            # Clear & Store: Recreate collection
+            ts.create_vector_collection(embedding_dim=embedding_dim)
+        else:
+            # Append: Check if collection exists, create if not
+            try:
+                ts.get_collection_info()
+            except:
+                # Collection doesn't exist, create it
+                ts.create_vector_collection(embedding_dim=embedding_dim)
+
+        # Prepare documents with embeddings
+        docs_with_embeddings = []
+        for i, text in enumerate(documents):
+            print(f"Generating embedding for document {i+1}/{len(documents)}")
+            embedding = ollama.generate_embedding(text, model=model)
+            docs_with_embeddings.append({
+                'id': str(int(time.time() * 1000) + i),  # Unique ID using timestamp
+                'text': text,
+                'embedding': embedding
+            })
+
+        # Insert documents
+        result = ts.insert_documents(docs_with_embeddings)
+
+        # Get total document count
+        collection_info = ts.get_collection_info()
+        total_docs = collection_info.get('num_documents', len(documents))
+
+        # Generate Python code snippet
+        mode_comment = "# Mode: Clear & Store - Recreates collection" if mode == 'clear' else "# Mode: Append - Adds to existing collection"
+        code_snippet = f"""# Index documents with explicit Gemma embeddings
+{mode_comment}
+# Model: {model}
+import requests
+import time
+
+documents = {documents}
+
+# Generate embeddings using Ollama with {model}
+docs_with_embeddings = []
+for i, text in enumerate(documents):
+    # Call Ollama API to generate embedding
+    response = requests.post(
+        'http://localhost:11434/api/embeddings',
+        json={{
+            'model': '{model}',
+            'prompt': text
+        }}
+    )
+    embedding = response.json()['embedding']
+
+    docs_with_embeddings.append({{
+        'id': str(int(time.time() * 1000) + i),
+        'text': text,
+        'embedding': embedding
+    }})
+
+# Import documents to Typesense
+import json
+import_data = '\\n'.join([json.dumps(doc) for doc in docs_with_embeddings])
+
+response = requests.post(
+    'http://{TYPESENSE_HOST}:{TYPESENSE_PORT}/collections/llm_semsim_gemma/documents/import',
+    headers={{'X-TYPESENSE-API-KEY': '{TYPESENSE_API_KEY}'}},
+    data=import_data
+)
+
+print(f"Indexed {{len(documents)}} documents using {model}")
+print(f"Embedding dimension: {embedding_dim}")
+print(f"Total documents in collection: {total_docs}")"""
+
+        return jsonify({
+            'success': True,
+            'count': len(documents),
+            'total_docs': total_docs,
+            'mode': mode,
+            'model': model,
+            'embedding_dim': embedding_dim,
+            'code': code_snippet
+        })
+
+    except Exception as e:
+        print(f"Error in typesense_gemma_index: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/typesense-gemma/search', methods=['POST'])
+def typesense_gemma_search():
+    """Search documents using explicit Ollama embedding model"""
+    try:
+        data = request.json
+        query = data.get('query', '')
+        model = data.get('model', 'nomic-embed-text')  # Must match the model used for indexing
+
+        if not query:
+            return jsonify({'success': False, 'error': 'No query provided'}), 400
+
+        # Initialize services
+        ollama = OllamaService(model=model)
+        ts = TypesenseService(
+            host=TYPESENSE_HOST,
+            port=TYPESENSE_PORT,
+            api_key=TYPESENSE_API_KEY,
+            collection_name='llm_semsim_gemma'
+        )
+
+        # Log collection info for debugging
+        try:
+            collection_info = ts.get_collection_info()
+            print(f"Collection: {collection_info.get('name')}, Documents: {collection_info.get('num_documents')}")
+        except Exception as e:
+            print(f"Could not get collection info: {e}")
+
+        # Generate query embedding using the same model
+        print(f"Generating query embedding with model: {model}")
+        query_embedding = ollama.generate_embedding(query, model=model)
+        print(f"Query embedding dimension: {len(query_embedding)}")
+
+        # Perform vector search
+        search_results = ts.vector_search(query_embedding, k=5)
+
+        # Extract results with scores
+        results = []
+        for hit in search_results.get('hits', []):
+            doc = hit['document']
+            # Vector distance is returned in vector_distance field
+            # Convert to similarity score (1 / (1 + distance))
+            distance = hit.get('vector_distance', 0)
+            similarity_score = 1 / (1 + distance)
+
+            results.append({
+                'text': doc['text'],
+                'score': similarity_score,
+                'distance': distance
+            })
+
+        # Generate Python code snippet
+        code_snippet = f"""# Search documents using explicit Gemma embeddings
+# Model: {model}
+import requests
+
+query = "{query}"
+
+# Generate query embedding using Ollama with {model}
+response = requests.post(
+    'http://localhost:11434/api/embeddings',
+    json={{
+        'model': '{model}',
+        'prompt': query
+    }}
+)
+query_embedding = response.json()['embedding']
+
+# Format vector query for Typesense
+embedding_str = ','.join([str(x) for x in query_embedding])
+vector_query = f'embedding:([{{embedding_str}}], k:5)'
+
+# Search in Typesense using vector similarity
+response = requests.get(
+    'http://{TYPESENSE_HOST}:{TYPESENSE_PORT}/collections/llm_semsim_gemma/documents/search',
+    headers={{'X-TYPESENSE-API-KEY': '{TYPESENSE_API_KEY}'}},
+    params={{
+        'q': '*',
+        'vector_query': vector_query,
+        'exclude_fields': 'embedding'
+    }}
+)
+
+results = response.json()
+print(f"Found {{results['found']}} results using {model}")
+
+for hit in results['hits']:
+    distance = hit.get('vector_distance', 0)
+    score = 1 / (1 + distance)
+    print(f"Score: {{score:.3f}} - {{hit['document']['text']}}")"""
+
+        return jsonify({
+            'success': True,
+            'results': results,
+            'found': len(results),
+            'model': model,
+            'code': code_snippet,
+            'raw_response': search_results
+        })
+
+    except Exception as e:
+        print(f"Error in typesense_gemma_search: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/typesense-gemma/list', methods=['GET'])
+def typesense_gemma_list():
+    """List all documents in the collection for debugging"""
+    try:
+        # Initialize Typesense service
+        ts = TypesenseService(
+            host=TYPESENSE_HOST,
+            port=TYPESENSE_PORT,
+            api_key=TYPESENSE_API_KEY,
+            collection_name='llm_semsim_gemma'
+        )
+
+        # Get all documents
+        search_results = ts.search(q='*', query_by='text', per_page=250)
+
+        documents = []
+        for hit in search_results.get('hits', []):
+            doc = hit['document']
+            documents.append({
+                'id': doc.get('id'),
+                'text': doc.get('text')
+            })
+
+        return jsonify({
+            'success': True,
+            'total': search_results.get('found', 0),
+            'documents': documents
+        })
+
+    except Exception as e:
+        print(f"Error in typesense_gemma_list: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':

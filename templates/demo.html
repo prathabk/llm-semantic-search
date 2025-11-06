@@ -255,7 +255,7 @@
                         <h2>
                             Interactive Chunking Demo
                         </h2>
-                        <div class="subtitle">Compare chunking strategies with real Q&A</div>
+                        <div class="subtitle">Hands-on chunking with Typesense storage</div>
                     </div>
                 </div>
                 <p class="demo-description">
@@ -264,6 +264,60 @@
                     then ask questions and see how retrieval quality varies. Uses Ollama for semantic chunking
                     and answer generation.
                 </p>
+                <div class="demo-features">
+                    <span class="feature-tag">💾 Store in Typesense</span>
+                    <span class="feature-tag">❓ Real-time Q&A</span>
+                    <span class="feature-tag">🤖 LLM-powered answers</span>
+                </div>
+            </a>
+
+            <!-- Typesense Similarity Search Demo -->
+            <a href="/demo/typesense" class="demo-item">
+                <div class="demo-item-header">
+                    <div class="demo-icon">💾</div>
+                    <div>
+                        <h2>
+                            Typesense Vector Similarity Search
+                        </h2>
+                        <div class="subtitle">Auto-embeddings with built-in models</div>
+                    </div>
+                </div>
+                <p class="demo-description">
+                    Experience true vector similarity search with Typesense's built-in auto-embedding feature.
+                    Simply index text documents and Typesense automatically generates embeddings using its built-in model (all-MiniLM-L12-v2).
+                    No external APIs needed! Search using natural language, view similarity scores, inspect raw responses, and see Python code snippets.
+                </p>
+                <div class="demo-features">
+                    <span class="feature-tag">🤖 Auto-Embeddings</span>
+                    <span class="feature-tag">📊 Similarity Scores</span>
+                    <span class="feature-tag">💻 Code Snippets</span>
+                    <span class="feature-tag">⚡ No External APIs</span>
+                </div>
+            </a>
+
+            <!-- Typesense Similarity Search with Ollama Embedding Models -->
+            <a href="/demo/typesense-gemma" class="demo-item">
+                <div class="demo-item-header">
+                    <div class="demo-icon">🤖</div>
+                    <div>
+                        <h2>
+                            Typesense Similarity Search - Ollama Embedding Models
+                        </h2>
+                        <div class="subtitle">Explicit embeddings with Ollama embedding models</div>
+                    </div>
+                </div>
+                <p class="demo-description">
+                    Take full control of embeddings by using Ollama's dedicated embedding models (nomic-embed-text, embeddinggemma, qwen3-embedding)
+                    to explicitly generate vector embeddings before indexing in Typesense. Choose your preferred embedding model to balance
+                    speed vs. quality. This demo shows how to generate embeddings programmatically using Ollama's API, store them in Typesense,
+                    and perform precise vector similarity searches with matching query embeddings.
+                </p>
+                <div class="demo-features">
+                    <span class="feature-tag">🎯 Model Selection</span>
+                    <span class="feature-tag">🧬 Explicit Embeddings</span>
+                    <span class="feature-tag">📊 Vector Distance</span>
+                    <span class="feature-tag">💻 Ollama Integration</span>
+                </div>
             </a>
         </div>
     </div>

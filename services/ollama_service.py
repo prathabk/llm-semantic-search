@@ -415,3 +415,55 @@ Answer:"""
     def get_available_models() -> List[str]:
         """Get list of available Ollama models"""
         return OllamaService.AVAILABLE_MODELS
+
+    def generate_embedding(self, text: str, model: Optional[str] = None) -> List[float]:
+        """
+        Generate embedding vector for text using Ollama
+
+        Args:
+            text: Text to generate embedding for
+            model: Optional model override (uses instance model if not provided)
+
+        Returns:
+            List of floats representing the embedding vector
+        """
+        try:
+            import requests
+
+            embedding_model = model or self.model
+
+            # Use Ollama API to generate embeddings
+            response = requests.post(
+                'http://localhost:11434/api/embeddings',
+                json={
+                    'model': embedding_model,
+                    'prompt': text
+                },
+                timeout=60
+            )
+
+            if response.status_code != 200:
+                raise Exception(f"Ollama embedding API error: {response.text}")
+
+            result = response.json()
+            return result['embedding']
+
+        except Exception as e:
+            raise Exception(f"Embedding generation failed: {str(e)}")
+
+    def generate_embedding_batch(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+        """
+        Generate embeddings for multiple texts
+
+        Args:
+            texts: List of texts to generate embeddings for
+            model: Optional model override
+
+        Returns:
+            List of embedding vectors
+        """
+        embeddings = []
+        for text in texts:
+            embedding = self.generate_embedding(text, model)
+            embeddings.append(embedding)
+        return embeddings
