@@ -475,8 +475,8 @@
                         <div class="example-box">
                             <h3>Example</h3>
                             <p style="font-family: monospace; background: var(--bg); padding: 12px; border-radius: 6px; line-height: 1.6;">
-                                <span style="color: #ef4444;">Chunk 1 (0-500):</span> "The scientist entered the lab early that morning. She had been working on the quantum entanglement experiment for months. The breakthrough came when she noticed an anomaly in the da..."<br><br>
-                                <span style="color: #ef4444;">Chunk 2 (500-1000):</span> "...ta readings. The particles were behaving exactly as Einstein predicted. Her colleague arrived at noon to review the findings..."
+                                <span style="color: #ef4444;">Chunk 1 (0-200):</span> "Dr. Lakshmi Venkataraman arrived at the IIT Bombay AI lab early morning, her chai still warm in the cool Mumbai air. She had been working on the neural language model for eighteen months witho..."<br><br>
+                                <span style="color: #ef4444;">Chunk 2 (200-400):</span> "...ut a breakthrough. Today felt different. The training results from last night showed an unprecedented improvement in understanding regional languages..."
                             </p>
                         </div>
 
@@ -525,10 +525,10 @@
                             <h3>Example</h3>
                             <p style="background: var(--bg); padding: 12px; border-radius: 6px; line-height: 1.8;">
                                 <span style="display: block; padding: 8px; background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; margin: 4px 0;">
-                                    <strong style="color: #10b981;">Chunk 1:</strong> The scientist entered the lab early that morning. She had been working on the quantum entanglement experiment for months. The breakthrough came when she noticed an anomaly in the data readings.
+                                    <strong style="color: #10b981;">Chunk 1:</strong> Dr. Lakshmi Venkataraman arrived at the IIT Bombay AI lab early morning, her chai still warm in the cool Mumbai air. She had been working on the neural language model for eighteen months without a breakthrough. Today felt different.
                                 </span>
                                 <span style="display: block; padding: 8px; background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; margin: 4px 0;">
-                                    <strong style="color: #10b981;">Chunk 2:</strong> The particles were behaving exactly as Einstein predicted. Her colleague arrived at noon to review the findings. They spent the afternoon validating the results.
+                                    <strong style="color: #10b981;">Chunk 2:</strong> The training results from last night showed an unprecedented improvement in understanding regional languages. The model was translating between Hindi, Tamil, and Bengali with accuracy far beyond Google's predictions. She quickly called her colleague, Dr. Pushpak Bhattacharyya, who specialized in natural language processing.
                                 </span>
                             </p>
                         </div>
@@ -578,10 +578,10 @@
                             <h3>Example (Window=3, Stride=2)</h3>
                             <p style="background: var(--bg); padding: 12px; border-radius: 6px; line-height: 1.8;">
                                 <span style="display: block; padding: 8px; background: rgba(37, 99, 235, 0.1); border-left: 3px solid #2563eb; margin: 4px 0;">
-                                    <strong style="color: #2563eb;">Chunk 1:</strong> [S1] The scientist entered the lab. [S2] She worked on quantum experiments. <span class="text-highlight">[S3] A breakthrough occurred.</span>
+                                    <strong style="color: #2563eb;">Chunk 1:</strong> [S1] Dr. Lakshmi arrived at the IIT Bombay AI lab. [S2] She had been working on the neural language model for eighteen months. <span class="text-highlight">[S3] Today felt different.</span>
                                 </span>
                                 <span style="display: block; padding: 8px; background: rgba(37, 99, 235, 0.15); border-left: 3px solid #2563eb; margin: 4px 0;">
-                                    <strong style="color: #2563eb;">Chunk 2:</strong> <span class="text-highlight">[S3] A breakthrough occurred.</span> [S4] The data showed anomalies. [S5] Her colleague arrived.
+                                    <strong style="color: #2563eb;">Chunk 2:</strong> <span class="text-highlight">[S3] Today felt different.</span> [S4] The training results showed unprecedented improvement. [S5] The model was translating between regional languages.
                                 </span>
                             </p>
                             <p style="margin-top: 12px; color: var(--text-secondary); font-size: 0.9em;">
@@ -635,13 +635,13 @@
                             <h3>Example</h3>
                             <p style="background: var(--bg); padding: 12px; border-radius: 6px; line-height: 1.8;">
                                 <span style="display: block; padding: 8px; background: rgba(139, 92, 246, 0.1); border-left: 3px solid #8b5cf6; margin: 4px 0;">
-                                    <strong style="color: #8b5cf6;">Chunk 1 (Topic: Experiment Setup):</strong> The scientist entered the lab early. She prepared the quantum entanglement equipment. All instruments were calibrated.
+                                    <strong style="color: #8b5cf6;">Chunk 1 (Topic: Background):</strong> Dr. Lakshmi Venkataraman arrived at the IIT Bombay AI lab early morning. She had been working on the neural language model for eighteen months without a breakthrough. Today felt different.
                                 </span>
                                 <span style="display: block; padding: 8px; background: rgba(139, 92, 246, 0.1); border-left: 3px solid #8b5cf6; margin: 4px 0;">
-                                    <strong style="color: #8b5cf6;">Chunk 2 (Topic: Discovery):</strong> The breakthrough came unexpectedly. Data showed anomalous particle behavior. This confirmed Einstein's predictions.
+                                    <strong style="color: #8b5cf6;">Chunk 2 (Topic: Discovery):</strong> The training results from last night showed an unprecedented improvement in understanding regional languages. The model was translating between Hindi, Tamil, and Bengali with accuracy far beyond Google's predictions.
                                 </span>
                                 <span style="display: block; padding: 8px; background: rgba(139, 92, 246, 0.1); border-left: 3px solid #8b5cf6; margin: 4px 0;">
-                                    <strong style="color: #8b5cf6;">Chunk 3 (Topic: Validation):</strong> Her colleague arrived to review findings. They validated results throughout the afternoon. Publication plans were discussed.
+                                    <strong style="color: #8b5cf6;">Chunk 3 (Topic: Validation):</strong> She quickly called her colleague, Dr. Pushpak Bhattacharyya. Together, they spent the entire afternoon analyzing the results, running validation tests, and checking for training errors.
                                 </span>
                             </p>
                         </div>
@@ -1156,13 +1156,13 @@
 
                         <p style="margin-bottom: 24px;">
                             Let's see how different chunking strategies affect the ability to answer specific questions
-                            about our quantum discovery story.
+                            about "The AI Language Breakthrough" story.
                         </p>
 
                         <div class="question-card">
                             <div class="question-text">
                                 <span class="question-icon">❓</span>
-                                Question 1: "How long had Dr. Martinez been working on the experiment?"
+                                Question 1: "How long had Dr. Lakshmi been working on the neural language model?"
                             </div>
                             <div class="answer-grid">
                                 <div class="answer-card poor">
@@ -1179,7 +1179,7 @@
                                 </div>
                                 <div class="answer-card good">
                                     <div class="answer-label" style="color: #059669;">🧠 Semantic: Excellent</div>
-                                    <div class="answer-content">Entire "experiment background" topic in one chunk. ✓✓</div>
+                                    <div class="answer-content">Entire "background" topic in one chunk. ✓✓</div>
                                 </div>
                             </div>
                         </div>
@@ -1187,7 +1187,7 @@
                         <div class="question-card">
                             <div class="question-text">
                                 <span class="question-icon">❓</span>
-                                Question 2: "What were the implications of their discovery?"
+                                Question 2: "What were the implications of the multilingual AI breakthrough?"
                             </div>
                             <div class="answer-grid">
                                 <div class="answer-card poor">
@@ -1221,7 +1221,7 @@
                                 </div>
                                 <div class="answer-card good">
                                     <div class="answer-label" style="color: #059669;">📝 Sentence-Based: Good</div>
-                                    <div class="answer-content">Sentences about Dr. Chen likely grouped together. ✓</div>
+                                    <div class="answer-content">Sentences about Dr. Pushpak Bhattacharyya likely grouped together. ✓</div>
                                 </div>
                                 <div class="answer-card good">
                                     <div class="answer-label" style="color: #059669;">🪟 Sliding Window: Excellent</div>

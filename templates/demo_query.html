@@ -686,11 +686,18 @@
                     console.log('Result:', result);
 
                     if (result.success && result.results && result.results.hits) {
-                        const hits = result.results.hits;
+                        let hits = result.results.hits;
 
                         if (hits.length === 0) {
                             content.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">No data found in collection. Please run the Full Pipeline Demo first to populate data.</div>';
                         } else {
+                            // Sort hits by ID to show data in the order it was added (oldest first)
+                            hits = hits.sort((a, b) => {
+                                const idA = a.document.id || '';
+                                const idB = b.document.id || '';
+                                return idA.localeCompare(idB);
+                            });
+
                             const totalFound = result.found || 0;
                             const showing = hits.length;
 
