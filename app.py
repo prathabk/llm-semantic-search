@@ -42,14 +42,14 @@ def llm_models():
     """LLM models with Ollama explanation page"""
     return render_template('llm_models.html')
 
-@app.route('/vector-database')
-def vector_database():
-    """Vector database (Typesense) explanation page"""
-    return render_template('vector_database.html')
-
 @app.route('/vector-database-slides')
 def vector_database_slides():
     """Typesense vector database slide presentation"""
+    return render_template('vector_database_slides.html')
+
+@app.route('/vector-database')
+def vector_database_redirect():
+    """Redirect old route to slides"""
     return render_template('vector_database_slides.html')
 
 @app.route('/semantic-search')
@@ -79,8 +79,8 @@ def demo_techniques():
 
 @app.route('/chunking')
 def chunking():
-    """Text chunking strategies explanation and demo"""
-    return render_template('chunking.html')
+    """Text chunking strategies explanation with Puducherry example"""
+    return render_template('demo_chunking_strategies.html')
 
 @app.route('/demo/chunking')
 def demo_chunking():
@@ -89,7 +89,7 @@ def demo_chunking():
 
 @app.route('/demo/chunking-strategies')
 def demo_chunking_strategies():
-    """Focused demo comparing all chunking strategies with Puducherry example"""
+    """Alias route - redirects to main chunking page"""
     return render_template('demo_chunking_strategies.html')
 
 @app.route('/demo/typesense')
@@ -294,22 +294,37 @@ def query_search():
             query_params = ollama.translate_query_to_filter(query, schema)
             print(f"Query params: {query_params}")
 
-        # Search Typesense
+        # Search Typesense (use hybrid search for better results)
         print(f"Searching Typesense with q='{query_params.get('q')}', filter_by='{query_params.get('filter_by')}', per_page={per_page}")
-        search_results = ts.search(
-            q=query_params.get('q', '*'),
-            filter_by=query_params.get('filter_by', ''),
-            per_page=per_page
-        )
+
+        # Use hybrid search for static queries (combines text search with filters)
+        if not generative:
+            print("Using hybrid search for static query")
+            search_results = ts.hybrid_search(
+                query=query_params.get('q', '*'),
+                filter_by=query_params.get('filter_by', ''),
+                per_page=per_page
+            )
+        else:
+            # Use regular search for generative queries
+            search_results = ts.search(
+                q=query_params.get('q', '*'),
+                filter_by=query_params.get('filter_by', ''),
+                per_page=per_page
+            )
         print(f"Search completed. Found: {search_results.get('found', 0)}, Hits: {len(search_results.get('hits', []))}")
 
         # Generate answer
         hits = search_results.get('hits', [])
         found_count = search_results.get('found', 0)
 
+        llm_context = None  # Will store the LLM prompt/context
+
         if generative and found_count > 0:
             # Use LLM to generate natural language answer
-            answer = ollama.generate_natural_answer(query, hits, found_count)
+            llm_response = ollama.generate_natural_answer(query, hits, found_count)
+            answer = llm_response.get('answer', 'Error generating answer')
+            llm_context = llm_response.get('context', '')
         else:
             # Static constructed answer
             if found_count == 0:
@@ -341,7 +356,7 @@ def query_search():
                     answer = f"Found {found_count} matching documents"
 
         print("Query completed successfully")
-        return jsonify({
+        response_data = {
             'success': True,
             'query': query,
             'typesense_params': query_params,
@@ -349,7 +364,13 @@ def query_search():
             'answer': answer,
             'found': found_count,
             'generative': generative
-        })
+        }
+
+        # Add LLM context if available
+        if llm_context:
+            response_data['llm_context'] = llm_context
+
+        return jsonify(response_data)
     except Exception as e:
         print(f"ERROR in /api/query: {str(e)}")
         import traceback

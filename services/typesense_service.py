@@ -412,3 +412,46 @@ class TypesenseService:
             raise Exception(f"Semantic search failed: {response.text}")
 
         return response.json()
+
+    def hybrid_search(
+        self,
+        query: str,
+        filter_by: str = '',
+        query_by: str = 'text',
+        per_page: int = 250
+    ) -> Dict[str, Any]:
+        """
+        Perform hybrid search combining keyword search with optional filters
+
+        This method performs text-based search on the specified fields,
+        which can be combined with filters for better results.
+
+        Args:
+            query: Search query
+            filter_by: Filter expression
+            query_by: Fields to query (default: 'text')
+            per_page: Results per page
+
+        Returns:
+            Search results
+        """
+        params = {
+            'q': query,
+            'query_by': query_by,
+            'per_page': per_page,
+            'sort_by': '_text_match:desc'  # Sort by text match score
+        }
+
+        if filter_by:
+            params['filter_by'] = filter_by
+
+        response = requests.get(
+            f'{self.base_url}/collections/{self.collection_name}/documents/search',
+            params=params,
+            headers=self.headers
+        )
+
+        if response.status_code != 200:
+            raise Exception(f"Hybrid search failed: {response.text}")
+
+        return response.json()

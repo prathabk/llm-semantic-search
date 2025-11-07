@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Semantic Search Demo - Interactive Demo</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/json-formatter.css') }}">
-    <script src="{{ url_for('static', filename='js/json-formatter.js') }}"></script>
+
+    <!-- Prism.js for code highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
     <style>
         .demo-container {
             max-width: 1200px;
@@ -387,6 +389,175 @@
             background: #e5e7eb;
             color: #374151;
         }
+
+        /* Collapsible widgets for code snippets */
+        .collapsible {
+            margin-top: 24px;
+        }
+
+        .collapsible-header {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            padding: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .collapsible-header:hover {
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .collapsible-header h4 {
+            margin: 0;
+            font-size: 1.05em;
+            color: var(--text);
+        }
+
+        .collapsible-arrow {
+            font-size: 1.2em;
+            transition: transform 0.3s;
+        }
+
+        .collapsible-header.active .collapsible-arrow {
+            transform: rotate(90deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible-content.active {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .code-snippet {
+            margin-top: 12px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .code-snippet pre {
+            margin: 0;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .code-snippet pre code {
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+
+        .json-output {
+            margin-top: 12px;
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* JSON Tree Viewer Styles */
+        .json-tree {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.875em;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .json-tree ul {
+            list-style: none;
+            padding-left: 24px;
+            margin: 4px 0;
+        }
+
+        .json-tree > ul {
+            padding-left: 0;
+        }
+
+        .json-tree li {
+            margin: 4px 0;
+            position: relative;
+        }
+
+        .json-key {
+            color: #0066cc;
+            font-weight: 600;
+        }
+
+        .json-string {
+            color: #22863a;
+        }
+
+        .json-number {
+            color: #005cc5;
+        }
+
+        .json-boolean {
+            color: #d73a49;
+        }
+
+        .json-null {
+            color: #6f42c1;
+        }
+
+        .json-toggle {
+            cursor: pointer;
+            user-select: none;
+            display: inline-block;
+            width: 16px;
+            color: #6a737d;
+            font-weight: bold;
+        }
+
+        .json-toggle:hover {
+            color: var(--primary);
+        }
+
+        .json-collapsed > ul {
+            display: none;
+        }
+
+        .json-bracket {
+            color: #6a737d;
+            font-weight: bold;
+        }
+
+        .json-item-count {
+            color: #6a737d;
+            font-size: 0.9em;
+            margin-left: 6px;
+        }
+
+        .code-section {
+            margin-top: 32px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .code-section h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 1.25em;
+        }
     </style>
 </head>
 <body>
@@ -453,11 +624,32 @@
                 </button>
             </div>
 
-            <div id="structuredOutput" class="output-box" style="display: none;">
-                <h4>Structured JSON Data</h4>
-                <pre id="structuredJson"></pre>
+            <div id="structuredOutput" style="display: none;">
+                <!-- Collapsible JSON Data -->
+                <div class="collapsible" style="margin-top: 16px;">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h4>📄 Structured JSON Data</h4>
+                        <span class="collapsible-arrow">▶</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="json-tree" id="structuredJson"></div>
+                    </div>
+                </div>
 
-                <div class="stats-grid">
+                <!-- Collapsible Python Code -->
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h4>💻 Python Code - Structure Data with LLM</h4>
+                        <span class="collapsible-arrow">▶</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="code-snippet">
+                            <pre class="line-numbers"><code class="language-python" id="structureCode"># Code will appear here after structuring</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="margin-top: 24px;">
                     <div class="stat-card">
                         <div class="stat-value" id="docCount">0</div>
                         <div class="stat-label">Documents Structured</div>
@@ -478,6 +670,19 @@
                 </div>
                 <div style="margin-top: 12px; padding: 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); font-size: 0.875em; color: var(--text-secondary);">
                     <strong style="color: var(--text);">💡 Tip:</strong> Use <strong>Clear and Store</strong> to replace existing data or <strong>Append</strong> to add to existing data without clearing.
+                </div>
+
+                <!-- Collapsible Store Response -->
+                <div class="collapsible" id="storeCodeSection" style="display: none;">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h4>💾 Python Code - Store in Typesense</h4>
+                        <span class="collapsible-arrow">▶</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="code-snippet">
+                            <pre class="line-numbers"><code class="language-python" id="storeCode"># Code will appear here after storing</code></pre>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -517,7 +722,7 @@
                 </button>
             </div>
 
-            <div id="queryOutput" class="output-box" style="display: none;">
+            <div id="queryOutput" style="display: none;">
                 <div id="answerBox" class="answer-box" style="margin-bottom: 24px;">
                     <div class="answer-label">
                         📊 Answer
@@ -526,46 +731,223 @@
                     <div class="answer-text" id="answerText"></div>
                 </div>
 
-                <h4>Generated Filter Query</h4>
-                <div class="json-container">
-                    <button class="json-copy-btn" onclick="copyJSON('typesenseQuery')">Copy</button>
-                    <div class="json-viewer compact" id="typesenseQuery"></div>
+                <!-- Collapsible Query Parameters -->
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h4>🔧 Generated Typesense Query</h4>
+                        <span class="collapsible-arrow">▶</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="json-output" id="typesenseQuery"></div>
+                    </div>
                 </div>
 
-                <h4 style="margin-top: 24px;">Typesense Response</h4>
-                <div class="json-container">
-                    <button class="json-copy-btn" onclick="copyJSON('rawResults')">Copy</button>
-                    <div class="json-viewer" id="rawResults"></div>
+                <!-- Collapsible LLM Context (only for generative) -->
+                <div class="collapsible" id="llmContextSection" style="display: none;">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h4>🤖 LLM Context (Prompt sent to Ollama)</h4>
+                        <span class="collapsible-arrow">▶</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="code-snippet">
+                            <pre style="background: #f8fafc; padding: 16px; border-radius: 8px; max-height: 500px; overflow-y: auto;"><code id="llmContext" style="color: #0f172a; white-space: pre-wrap;">Context will appear here after generative query</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collapsible Python Code -->
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h4>💻 Python Code - Query Typesense</h4>
+                        <span class="collapsible-arrow">▶</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="code-snippet">
+                            <pre class="line-numbers"><code class="language-python" id="queryCode"># Code will appear here after querying</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collapsible Raw Response -->
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h4>📄 Raw Typesense Response (JSON)</h4>
+                        <span class="collapsible-arrow">▶</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="json-tree" id="rawResults"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Prism.js Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
     <script>
-        // JSON Formatter
-        const jsonFormatter = new JSONFormatter({ collapsible: false });
-
-        // Copy JSON to clipboard
-        function copyJSON(elementId) {
-            const element = document.getElementById(elementId);
-            const text = element.textContent;
-
-            navigator.clipboard.writeText(text).then(() => {
-                const btn = element.previousElementSibling;
-                const originalText = btn.textContent;
-                btn.textContent = 'Copied!';
-                btn.classList.add('copied');
-
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.classList.remove('copied');
-                }, 2000);
-            });
-        }
-
         // State
         let structuredData = [];
         let currentModel = 'gemma3:1b';
+
+        // Toggle collapsible sections
+        function toggleCollapsible(header) {
+            header.classList.toggle('active');
+            const content = header.nextElementSibling;
+            content.classList.toggle('active');
+        }
+
+        // JSON Tree Renderer
+        function renderJsonTree(data, container) {
+            container.innerHTML = '';
+            const ul = document.createElement('ul');
+            ul.style.paddingLeft = '0';
+            const tree = createJsonTree(data);
+            ul.appendChild(tree);
+            container.appendChild(ul);
+        }
+
+        function createJsonTree(data, key = null) {
+            const li = document.createElement('li');
+
+            if (Array.isArray(data)) {
+                // Array
+                const toggle = document.createElement('span');
+                toggle.className = 'json-toggle';
+                toggle.textContent = '▼';
+                toggle.onclick = function(e) {
+                    e.stopPropagation();
+                    li.classList.toggle('json-collapsed');
+                    toggle.textContent = li.classList.contains('json-collapsed') ? '▶' : '▼';
+                };
+
+                const label = document.createElement('span');
+                if (key !== null) {
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'json-key';
+                    keySpan.textContent = key;
+                    label.appendChild(keySpan);
+                    label.appendChild(document.createTextNode(': '));
+                }
+
+                const bracket = document.createElement('span');
+                bracket.className = 'json-bracket';
+                bracket.textContent = '[';
+                label.appendChild(bracket);
+
+                const count = document.createElement('span');
+                count.className = 'json-item-count';
+                count.textContent = data.length + (data.length === 1 ? ' item' : ' items');
+                label.appendChild(count);
+
+                li.appendChild(toggle);
+                li.appendChild(label);
+
+                if (data.length > 0) {
+                    const ul = document.createElement('ul');
+                    data.forEach((item, index) => {
+                        ul.appendChild(createJsonTree(item, index));
+                    });
+                    li.appendChild(ul);
+
+                    const closeBracket = document.createElement('span');
+                    closeBracket.className = 'json-bracket';
+                    closeBracket.textContent = ']';
+                    ul.appendChild(closeBracket);
+                } else {
+                    const closeBracket = document.createElement('span');
+                    closeBracket.className = 'json-bracket';
+                    closeBracket.textContent = ']';
+                    label.appendChild(closeBracket);
+                }
+
+            } else if (typeof data === 'object' && data !== null) {
+                // Object
+                const toggle = document.createElement('span');
+                toggle.className = 'json-toggle';
+                toggle.textContent = '▼';
+                toggle.onclick = function(e) {
+                    e.stopPropagation();
+                    li.classList.toggle('json-collapsed');
+                    toggle.textContent = li.classList.contains('json-collapsed') ? '▶' : '▼';
+                };
+
+                const label = document.createElement('span');
+                if (key !== null) {
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'json-key';
+                    keySpan.textContent = key;
+                    label.appendChild(keySpan);
+                    label.appendChild(document.createTextNode(': '));
+                }
+
+                const bracket = document.createElement('span');
+                bracket.className = 'json-bracket';
+                bracket.textContent = '{';
+                label.appendChild(bracket);
+
+                const keys = Object.keys(data);
+                const count = document.createElement('span');
+                count.className = 'json-item-count';
+                count.textContent = keys.length + (keys.length === 1 ? ' property' : ' properties');
+                label.appendChild(count);
+
+                li.appendChild(toggle);
+                li.appendChild(label);
+
+                if (keys.length > 0) {
+                    const ul = document.createElement('ul');
+                    keys.forEach((k) => {
+                        ul.appendChild(createJsonTree(data[k], k));
+                    });
+                    li.appendChild(ul);
+
+                    const closeBracket = document.createElement('span');
+                    closeBracket.className = 'json-bracket';
+                    closeBracket.textContent = '}';
+                    ul.appendChild(closeBracket);
+                } else {
+                    const closeBracket = document.createElement('span');
+                    closeBracket.className = 'json-bracket';
+                    closeBracket.textContent = '}';
+                    label.appendChild(closeBracket);
+                }
+
+            } else {
+                // Primitive value
+                const label = document.createElement('span');
+
+                if (key !== null) {
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'json-key';
+                    keySpan.textContent = key;
+                    label.appendChild(keySpan);
+                    label.appendChild(document.createTextNode(': '));
+                }
+
+                const valueSpan = document.createElement('span');
+                if (typeof data === 'string') {
+                    valueSpan.className = 'json-string';
+                    valueSpan.textContent = '"' + data + '"';
+                } else if (typeof data === 'number') {
+                    valueSpan.className = 'json-number';
+                    valueSpan.textContent = data;
+                } else if (typeof data === 'boolean') {
+                    valueSpan.className = 'json-boolean';
+                    valueSpan.textContent = data;
+                } else if (data === null) {
+                    valueSpan.className = 'json-null';
+                    valueSpan.textContent = 'null';
+                }
+                label.appendChild(valueSpan);
+
+                li.appendChild(label);
+            }
+
+            return li;
+        }
 
         // Update line count
         document.getElementById('inputData').addEventListener('input', (e) => {
@@ -575,15 +957,18 @@
 
         // Load sample data
         function loadSampleData() {
-            const sampleData = `Balu is a boy. He likes blue color and curd rice.
-He like red color and his name is Babluo, but he always eats sambar rice.
-Ram is a boy. He likes red color and briyani.
-Bob sometimes eats curd rice but most of the time he prefers briyani while eating he always wears yellow dress
-Sheela is a girl. She likes orange color and curd rice.
-Sunita is a girl. She likes blue color and chicken bryani.`;
+            const sampleData = `Ravi is a boy. He likes blue color and sambar rice.
+He like red color and his name is Shantanu, but he always eats dhal rice.
+Revathy is a girl. She likes red color and chicken bryani.
+Himanshu is a boy. He likes green color and roti and dhal.
+Kaushal sometimes eats curd rice but most of the time he prefers briyani while eating he always wears yellow dress.
+Fayas likes mutton biryani and he like yellow color
+Vishwa is a boy. He likes orange color and curd rice.
+Shruthi doesn't like curd rice but prefers omelette however she likes white color
+Nirnajn is fan of chicken biryaani and a blue color fan`;
 
             document.getElementById('inputData').value = sampleData;
-            document.getElementById('lineCount').textContent = '6 lines';
+            document.getElementById('lineCount').textContent = '9 lines';
             showStatus('Sample data loaded!', 'success');
         }
 
@@ -614,9 +999,44 @@ Sunita is a girl. She likes blue color and chicken bryani.`;
 
                 if (result.success) {
                     structuredData = result.data;
-                    // Use pre tag for plain JSON in the structuring step
-                    document.getElementById('structuredJson').textContent =
-                        JSON.stringify(result.data, null, 2);
+
+                    // Display JSON data as tree
+                    const jsonContainer = document.getElementById('structuredJson');
+                    renderJsonTree(result.data, jsonContainer);
+
+                    // Generate and display Python code
+                    const inputLines = lines.map(l => l.replace(/'/g, "\\'")).join("',\n    '");
+                    const structureCodeSnippet = `# Structure unstructured data using LLM
+import requests
+
+# Unstructured text data
+texts = [
+    '${inputLines}'
+]
+
+# API endpoint
+url = 'http://localhost:9010/api/structure'
+
+# Request payload
+payload = {
+    'texts': texts,
+    'model': '${model}'
+}
+
+# Send request to structure data
+response = requests.post(url, json=payload)
+result = response.json()
+
+if result['success']:
+    structured_data = result['data']
+    print(f"Structured {result['count']} documents")
+    print("Sample document:", structured_data[0])
+else:
+    print(f"Error: {result['error']}")`;
+
+                    document.getElementById('structureCode').textContent = structureCodeSnippet;
+                    Prism.highlightElement(document.getElementById('structureCode'));
+
                     document.getElementById('docCount').textContent = result.count;
                     document.getElementById('modelUsed').textContent = model.split(':')[1];
                     document.getElementById('structuredOutput').style.display = 'block';
@@ -671,6 +1091,37 @@ Sunita is a girl. She likes blue color and chicken bryani.`;
                     updateStep(4, 'active');
                     const action = recreate ? 'Cleared and stored' : 'Appended';
                     showStatus(`${action} ${result.inserted} documents in Typesense!`, 'success');
+
+                    // Generate and display Python code for storing
+                    const storeCodeSnippet = `# Store structured data in Typesense
+import requests
+import json
+
+# Structured data from previous step
+documents = ${JSON.stringify(structuredData, null, 4)}
+
+# API endpoint
+url = 'http://localhost:9010/api/store'
+
+# Request payload
+payload = {
+    'documents': documents,
+    'recreate': ${recreate}  # ${recreate ? 'Clear & Store mode' : 'Append mode'}
+}
+
+# Send request to store data
+response = requests.post(url, json=payload)
+result = response.json()
+
+if result['success']:
+    print(f"Stored {result['inserted']} documents in collection '{result['collection']}'")
+else:
+    print(f"Error: {result['error']}")`;
+
+                    document.getElementById('storeCode').textContent = storeCodeSnippet;
+                    Prism.highlightElement(document.getElementById('storeCode'));
+                    document.getElementById('storeCodeSection').style.display = 'block';
+
                     document.getElementById('querySection').style.display = 'block';
                     document.getElementById('querySection').scrollIntoView({ behavior: 'smooth' });
                 } else {
@@ -728,15 +1179,55 @@ Sunita is a girl. She likes blue color and chicken bryani.`;
                     // Show Typesense query (formatted JSON)
                     const filterQuery = {
                         q: result.typesense_params.q,
-                        filter_by: result.typesense_params.filter_by || '(none)',
-                        natural_answer: result.typesense_params.natural_answer
+                        filter_by: result.typesense_params.filter_by || '(none)'
                     };
-                    document.getElementById('typesenseQuery').innerHTML =
-                        jsonFormatter.format(filterQuery);
+                    document.getElementById('typesenseQuery').textContent =
+                        JSON.stringify(filterQuery, null, 2);
 
-                    // Show raw results (formatted JSON)
-                    document.getElementById('rawResults').innerHTML =
-                        jsonFormatter.format(result.results);
+                    // Show LLM context if available (for generative queries)
+                    if (result.llm_context) {
+                        document.getElementById('llmContext').textContent = result.llm_context;
+                        document.getElementById('llmContextSection').style.display = 'block';
+                    } else {
+                        document.getElementById('llmContextSection').style.display = 'none';
+                    }
+
+                    // Generate and display Python code for querying
+                    const queryCodeSnippet = `# Query Typesense with natural language
+import requests
+
+# Natural language query
+query = "${query}"
+model = "${currentModel}"
+generative = ${generative}  # ${generative ? 'Use LLM for answer generation' : 'Static answer format'}
+
+# API endpoint
+url = 'http://localhost:9010/api/query'
+
+# Request payload
+payload = {
+    'query': query,
+    'model': model,
+    'generative': generative
+}
+
+# Send query request
+response = requests.post(url, json=payload)
+result = response.json()
+
+if result['success']:
+    print(f"Answer: {result['answer']}")
+    print(f"Found: {result['found']} documents")
+    print(f"Query translated to: {result['typesense_params']}")
+else:
+    print(f"Error: {result['error']}")`;
+
+                    document.getElementById('queryCode').textContent = queryCodeSnippet;
+                    Prism.highlightElement(document.getElementById('queryCode'));
+
+                    // Show raw results as tree structure
+                    const rawResultsContainer = document.getElementById('rawResults');
+                    renderJsonTree(result.results, rawResultsContainer);
 
                     document.getElementById('queryOutput').style.display = 'block';
                     updateStep(4, 'completed');

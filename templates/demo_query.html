@@ -374,6 +374,92 @@
         #allDataContent::-webkit-scrollbar-thumb:hover {
             background: var(--text-secondary);
         }
+
+        /* Collapsible widgets for LLM context */
+        .collapsible {
+            margin-top: 20px;
+        }
+
+        .collapsible-header {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            padding: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .collapsible-header:hover {
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .collapsible-header h4 {
+            margin: 0;
+            font-size: 1.05em;
+            color: var(--text);
+        }
+
+        .collapsible-arrow {
+            font-size: 1.2em;
+            transition: transform 0.3s;
+            color: var(--text-secondary);
+        }
+
+        .collapsible-header.active .collapsible-arrow {
+            transform: rotate(90deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible-content.active {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .llm-context-box {
+            margin-top: 12px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.875em;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: #0f172a;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1em;
+            background: var(--surface);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .model-info {
+            font-size: 0.875em;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
     </style>
 </head>
 <body>
@@ -423,6 +509,19 @@
                 >
             </div>
 
+            <div class="form-group">
+                <label for="modelSelect">🤖 LLM Model</label>
+                <select id="modelSelect">
+                    <option value="gemma3:270m">Gemma 3:270M (Fastest, less accurate)</option>
+                    <option value="gemma3:1b" selected>Gemma 3:1B (Balanced - Recommended)</option>
+                    <option value="gemma3:4b">Gemma 3:4B (Slower, more accurate)</option>
+                    <option value="gemma3:12b">Gemma 3:12B (Slowest, most accurate)</option>
+                </select>
+                <div class="model-info">
+                    💡 Larger models provide better accuracy but take longer to process
+                </div>
+            </div>
+
             <div class="toggle-section">
                 <div class="toggle-option">
                     <input type="checkbox" id="generativeToggle" checked>
@@ -465,6 +564,19 @@
                 <div class="documents-grid" id="documentsGrid"></div>
             </div>
 
+            <!-- LLM Context (only for generative queries) -->
+            <div class="detail-section" id="llmContextSection" style="display: none;">
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h4>🤖 LLM Context & Instructions (Sent to Ollama)</h4>
+                        <span class="collapsible-arrow">▶</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="llm-context-box" id="llmContextBox"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Filter Query -->
             <div class="detail-section">
                 <h3><span class="section-icon">⚙️</span> Generated Filter Query</h3>
@@ -486,8 +598,14 @@
     </div>
 
     <script>
-        let currentModel = 'gemma3:1b';
         const jsonFormatter = new JSONFormatter({ collapsible: false });
+
+        // Toggle collapsible sections
+        function toggleCollapsible(header) {
+            header.classList.toggle('active');
+            const content = header.nextElementSibling;
+            content.classList.toggle('active');
+        }
 
         // Copy JSON to clipboard
         function copyJSON(elementId) {
@@ -517,6 +635,7 @@
         async function executeQuery() {
             const query = document.getElementById('queryInput').value;
             const generative = document.getElementById('generativeToggle').checked;
+            const model = document.getElementById('modelSelect').value;
 
             if (!query.trim()) {
                 showStatus('Please enter a query', 'error');
@@ -525,6 +644,7 @@
 
             console.log('=== Executing Query ===');
             console.log('Query:', query);
+            console.log('Model:', model);
             console.log('Generative:', generative);
 
             setLoading(true);
@@ -536,7 +656,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         query: query,
-                        model: currentModel,
+                        model: model,
                         generative: generative
                     })
                 });
@@ -547,6 +667,7 @@
                 console.log('Found:', result.found);
                 console.log('Typesense params:', result.typesense_params);
                 console.log('Answer:', result.answer);
+                console.log('LLM Context:', result.llm_context);
                 console.log('Full result:', result);
 
                 if (result.success) {
@@ -578,6 +699,14 @@
             } else {
                 badge.textContent = 'Static';
                 badge.className = 'answer-badge static';
+            }
+
+            // 1.5. LLM Context (if available)
+            if (result.llm_context) {
+                document.getElementById('llmContextBox').textContent = result.llm_context;
+                document.getElementById('llmContextSection').style.display = 'block';
+            } else {
+                document.getElementById('llmContextSection').style.display = 'none';
             }
 
             // 2. Matching Documents

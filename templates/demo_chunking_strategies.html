@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chunking Strategies Comparison - Puducherry Example</title>
+    <title>Text Chunking Strategies - Semantic Search Course</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/carousel.css') }}">
     <style>
@@ -284,11 +284,65 @@
             background: #dc2626;
             color: white;
         }
+
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .strategy-badge {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .strategy-badge:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .strategy-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        .strategy-name {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9em;
+        }
+
+        .formula-box {
+            background: var(--bg);
+            border-left: 4px solid var(--primary);
+            padding: 16px;
+            margin: 16px 0;
+            font-family: monospace;
+            font-size: 0.95em;
+            border-radius: 4px;
+        }
+
+        .example-box {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .example-box h3 {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="/chunking" class="home-link">← Back to Chunking</a>
+        <a href="/" class="home-link">← Back to Home</a>
 
         <div class="progress-bar">
             <div class="progress-fill" id="progressFill"></div>
@@ -300,22 +354,54 @@
                 <!-- Slide 1: Title -->
                 <div class="slide">
                     <div class="slide-content title-slide">
-                        <h1>🎯 Chunking Strategies Deep Dive</h1>
-                        <p class="subtitle">Understanding Context Loss with a Simple Example</p>
+                        <h1>✂️ Text Chunking Strategies</h1>
+                        <p class="subtitle">Breaking Text into Meaningful Pieces</p>
                         <div class="course-info">
                             <p>
-                                We'll explore all 6 chunking strategies using a simple two-sentence example
-                                that perfectly demonstrates the <strong>context loss problem</strong>.
+                                Before we can search through text, we need to break it into manageable chunks.
+                                But how you chunk your text dramatically affects search quality. Choose the wrong
+                                strategy, and you'll lose critical context or fail to answer questions accurately.
                             </p>
-                            <p style="margin-top: 20px;">
-                                You'll see exactly <strong>which queries work</strong> and <strong>which fail</strong>
-                                with each strategy, and learn how advanced techniques solve these problems.
+                            <p style="margin-top: 20px; color: var(--text-secondary);">
+                                Use arrow keys or buttons below to navigate
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Slide 2: The Example Document -->
+                <!-- Slide 2: What is Chunking? -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>What is Text Chunking?</h2>
+                            <p class="slide-subtitle">The Foundation of Semantic Search</p>
+                        </div>
+
+                        <p>
+                            <strong>Text chunking</strong> is the process of dividing a large document into smaller,
+                            meaningful pieces. Each chunk becomes a searchable unit in your vector database.
+                        </p>
+
+                        <div class="example-box" style="margin-top: 24px;">
+                            <h3>Why Can't We Just Store Entire Documents?</h3>
+                            <p style="line-height: 1.8;">
+                                <strong>1. Context Window Limits:</strong> LLMs have token limits (e.g., 4K, 8K tokens)<br>
+                                <strong>2. Precision:</strong> Large documents contain many topics, making retrieval less accurate<br>
+                                <strong>3. Efficiency:</strong> Smaller chunks = faster search and lower costs<br>
+                                <strong>4. Relevance:</strong> You want the specific paragraph that answers a question, not a 50-page document
+                            </p>
+                        </div>
+
+                        <div class="formula-box" style="margin-top: 24px;">
+                            <strong>The Chunking Trade-off:</strong><br>
+                            • <strong>Too small:</strong> Lose context (e.g., character-level chunks)<br>
+                            • <strong>Too large:</strong> Noisy results, multiple topics mixed<br>
+                            • <strong>Just right:</strong> Preserves semantic coherence, focused retrieval
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: The Example Document -->
                 <div class="slide">
                     <div class="slide-content">
                         <div class="slide-header">
@@ -352,7 +438,7 @@
                     </div>
                 </div>
 
-                <!-- Slide 3: Fixed-Size Chunking -->
+                <!-- Slide 4: Fixed-Size Chunking -->
                 <div class="slide">
                     <div class="slide-content">
                         <div class="slide-header">
@@ -413,7 +499,7 @@
                     </div>
                 </div>
 
-                <!-- Slide 4: Sentence-Based Chunking -->
+                <!-- Slide 5: Sentence-Based Chunking -->
                 <div class="slide">
                     <div class="slide-content">
                         <div class="slide-header">
@@ -475,7 +561,7 @@
                     </div>
                 </div>
 
-                <!-- Slide 5: Sliding Window Chunking -->
+                <!-- Slide 6: Sliding Window Chunking -->
                 <div class="slide">
                     <div class="slide-content">
                         <div class="slide-header">
@@ -551,7 +637,7 @@
                     </div>
                 </div>
 
-                <!-- Slide 6: Semantic Chunking -->
+                <!-- Slide 7: Semantic Chunking -->
                 <div class="slide">
                     <div class="slide-content">
                         <div class="slide-header">
@@ -610,7 +696,7 @@
                     </div>
                 </div>
 
-                <!-- Slide 7: Late Chunking -->
+                <!-- Slide 8: Late Chunking -->
                 <div class="slide">
                     <div class="slide-content">
                         <div class="slide-header">
@@ -711,7 +797,7 @@
                     </div>
                 </div>
 
-                <!-- Slide 8: Contextual Embeddings -->
+                <!-- Slide 9: Contextual Embeddings -->
                 <div class="slide">
                     <div class="slide-content">
                         <div class="slide-header">
@@ -870,7 +956,7 @@
                     </div>
                 </div>
 
-                <!-- Slide 9: Complete Query Comparison -->
+                <!-- Slide 10: Complete Query Comparison -->
                 <div class="slide">
                     <div class="slide-content">
                         <div class="slide-header">
@@ -952,7 +1038,91 @@
                     </div>
                 </div>
 
-                <!-- Slide 10: Key Takeaways -->
+                <!-- Slide 11: Overview of Strategies -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Six Chunking Strategies</h2>
+                            <p class="slide-subtitle">From Simple to State-of-the-Art</p>
+                        </div>
+
+                        <div class="strategy-grid">
+                            <div class="strategy-badge" style="border-color: #ef4444;">
+                                <div class="strategy-icon">📏</div>
+                                <div class="strategy-name">Fixed-Size</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #10b981;">
+                                <div class="strategy-icon">📝</div>
+                                <div class="strategy-name">Sentence-Based</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #2563eb;">
+                                <div class="strategy-icon">🪟</div>
+                                <div class="strategy-name">Sliding Window</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #8b5cf6;">
+                                <div class="strategy-icon">🧠</div>
+                                <div class="strategy-name">Semantic</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #f59e0b; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                                <div class="strategy-icon">🎯</div>
+                                <div class="strategy-name">Late Chunking</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #6366f1; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);">
+                                <div class="strategy-icon">🌐</div>
+                                <div class="strategy-name">Contextual Embeddings</div>
+                            </div>
+                        </div>
+
+                        <table class="summary-table" style="margin-top: 32px; width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                            <thead>
+                                <tr>
+                                    <th style="padding: 12px; background: var(--primary); color: white; text-align: left;">Strategy</th>
+                                    <th style="padding: 12px; background: var(--primary); color: white; text-align: left;">How It Works</th>
+                                    <th style="padding: 12px; background: var(--primary); color: white; text-align: left;">Best For</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Fixed-Size</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Split every N characters/tokens</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Simple use cases, consistent sizing</td>
+                                </tr>
+                                <tr style="background: var(--bg);">
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Sentence-Based</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Split at sentence boundaries</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Natural language, Q&A systems</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Sliding Window</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Overlapping chunks with stride</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Continuous narratives, preserving context</td>
+                                </tr>
+                                <tr style="background: var(--bg);">
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Semantic</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">AI-driven topic boundaries</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Complex documents, topic-based retrieval</td>
+                                </tr>
+                                <tr style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Late Chunking</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Embed full doc, then chunk tokens</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Cross-references, pronoun resolution</td>
+                                </tr>
+                                <tr style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);">
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Contextual Embeddings</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Model injects global context per chunk</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Best quality + efficiency, production systems</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p style="margin-top: 20px; padding: 12px; background: #e0e7ff; border-left: 4px solid #6366f1; border-radius: 6px;">
+                            <strong>💡 Note:</strong> Late Chunking and Contextual Embeddings are <strong>advanced techniques</strong>
+                            that solve the context loss problem. We'll explore them with the Puducherry example!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Slide 12: Key Takeaways -->
                 <div class="slide">
                     <div class="slide-content">
                         <div class="slide-header">
@@ -1013,9 +1183,14 @@
                         </ul>
 
                         <div style="text-align: center; margin-top: 48px;">
-                            <a href="/chunking" style="text-decoration: none;">
+                            <a href="/" style="text-decoration: none;">
                                 <button class="action-btn" style="padding: 16px 32px; font-size: 1.125em;">
-                                    📚 Back to Full Chunking Guide
+                                    ← Back to Home
+                                </button>
+                            </a>
+                            <a href="/demo/chunking" style="text-decoration: none; margin-left: 16px;">
+                                <button class="action-btn" style="padding: 16px 32px; font-size: 1.125em; background: var(--primary);">
+                                    🔬 Interactive Chunking Demo →
                                 </button>
                             </a>
                         </div>
@@ -1032,7 +1207,7 @@
             <div class="nav-center">
                 <div class="slide-indicators" id="slideIndicators"></div>
                 <span class="slide-counter">
-                    <span id="currentSlide">1</span> / <span id="totalSlides">10</span>
+                    <span id="currentSlide">1</span> / <span id="totalSlides">12</span>
                 </span>
             </div>
 
@@ -1047,7 +1222,7 @@
     <script>
         // Carousel State
         let currentSlide = 0;
-        const totalSlides = 10;
+        const totalSlides = 12;
         const carouselWrapper = document.getElementById('carouselWrapper');
         const progressFill = document.getElementById('progressFill');
         const prevBtn = document.getElementById('prevBtn');

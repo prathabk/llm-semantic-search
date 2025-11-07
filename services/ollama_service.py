@@ -12,7 +12,8 @@ class OllamaService:
     AVAILABLE_MODELS = [
         'gemma3:270m',
         'gemma3:1b',
-        'gemma3:4b'
+        'gemma3:4b',
+        'gemma3:12b'
     ]
 
     def __init__(self, model: str = 'gemma3:1b'):
@@ -272,7 +273,7 @@ Return JSON only, no explanation:"""
         query: str,
         results: List[Dict[str, Any]],
         found_count: int
-    ) -> str:
+    ) -> Dict[str, str]:
         """
         Generate a natural language answer based on query and results
 
@@ -282,10 +283,13 @@ Return JSON only, no explanation:"""
             found_count: Number of results found
 
         Returns:
-            Natural language answer string
+            Dictionary with 'answer' and 'context' (the prompt sent to LLM)
         """
         if found_count == 0:
-            return "No results found for your query."
+            return {
+                "answer": "No results found for your query.",
+                "context": ""
+            }
 
         # Prepare context from results
         context = []
@@ -307,17 +311,19 @@ Search Results ({found_count} found):
 {json.dumps(context, indent=2)}
 
 Instructions:
-- Answer the question directly and naturally
-- If asked "how many", provide count with details (e.g., "1 boy" or "3 boys and 2 girls")
-- If asked "who" or "list names", list the names clearly
-- If asked about preferences, describe what they like
-- If asked about colors/foods mentioned, analyze all results and count unique values
-- For "how many colors mentioned", count distinct colors from likes_color field
-- For "how many foods mentioned", count distinct foods from likes_food field
-- Be concise but informative
+- Answer the question ACCURATELY by counting ALL results provided above
+- The search results already contain ONLY the matching documents, so count ALL of them
+- If asked "how many people", count the total number of results ({found_count})
+- If asked "how many", provide ACCURATE count based on ALL {found_count} results
+- When counting by gender: count each gender from ALL results (boy/girl/unknown)
+- Example: If there are 2 results with blue color, say "2 people like blue color"
+- If asked "who" or "list names", list ALL names from the results
+- If asked about preferences, describe what ALL of them like
+- DO NOT filter or reduce the count - use ALL {found_count} results
+- Be precise with numbers and list names when relevant
 - Use natural language
 
-Answer:"""
+Answer based on ALL {found_count} results:"""
 
         try:
             result = subprocess.run(
@@ -331,14 +337,19 @@ Answer:"""
                 raise Exception(f"Ollama error: {result.stderr}")
 
             answer = result.stdout.strip()
-            return answer
+            return {
+                "answer": answer,
+                "context": prompt
+            }
 
         except Exception as e:
             # Fallback to simple answer
             names = [doc.get('name', 'Unknown') for doc in context if doc.get('name')]
-            if names:
-                return f"Found {found_count} result(s): {', '.join(names)}"
-            return f"Found {found_count} matching documents"
+            fallback_answer = f"Found {found_count} result(s): {', '.join(names)}" if names else f"Found {found_count} matching documents"
+            return {
+                "answer": fallback_answer,
+                "context": prompt
+            }
 
     def generate_text(self, prompt: str, max_tokens: int = 500) -> str:
         """
