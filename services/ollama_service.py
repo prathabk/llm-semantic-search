@@ -3,6 +3,7 @@ Ollama Service - Handle LLM interactions for text structuring
 """
 import json
 import subprocess
+import re
 from typing import List, Dict, Any, Optional
 
 
@@ -115,6 +116,137 @@ Return ONLY valid JSON, no explanations or markdown. If a field is not mentioned
                 structured = self.structure_text(text.strip(), schema_hint)
                 results.append(structured)
         return results
+
+    def structure_log_line(self, log_line: str) -> Dict[str, Any]:
+        """
+        Parse nginx log line into structured data
+
+        Expected format:
+        2024-01-15 10:23:45 [INFO] 192.168.1.100 - GET /api/users - 200 - 45ms - requestId: req_001 userId: user_123
+
+        Args:
+            log_line: Single nginx log line
+
+        Returns:
+            Structured log data dictionary
+        """
+        # Regex pattern to parse nginx log format
+        pattern = r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+\[(\w+)\]\s+(\S+)\s+-\s+(\w+)\s+(\S+)\s+-\s+(\d+)\s+-\s+(\d+)ms\s+-\s+requestId:\s+(\S+)\s+userId:\s+(\S+)(?:\s+-\s+(.*))?$'
+
+        match = re.match(pattern, log_line.strip())
+
+        if not match:
+            # If regex doesn't match, return basic structure with the raw log
+            return {
+                'timestamp': '',
+                'log_level': 'UNKNOWN',
+                'ip_address': '',
+                'http_method': '',
+                'endpoint': '',
+                'status_code': 0,
+                'response_time': 0,
+                'request_id': '',
+                'user_id': '',
+                'error_message': '',
+                'text': log_line,
+                'parse_error': True
+            }
+
+        # Extract matched groups
+        timestamp = match.group(1)
+        log_level = match.group(2)
+        ip_address = match.group(3)
+        http_method = match.group(4)
+        endpoint = match.group(5)
+        status_code = int(match.group(6))
+        response_time = int(match.group(7))
+        request_id = match.group(8)
+        user_id = match.group(9)
+        error_message = match.group(10) if match.group(10) else ''
+
+        return {
+            'timestamp': timestamp,
+            'log_level': log_level,
+            'ip_address': ip_address,
+            'http_method': http_method,
+            'endpoint': endpoint,
+            'status_code': status_code,
+            'response_time': response_time,
+            'request_id': request_id,
+            'user_id': user_id,
+            'error_message': error_message,
+            'text': log_line,
+            'parse_error': False
+        }
+
+    def structure_logs_batch(self, log_lines: List[str]) -> List[Dict[str, Any]]:
+        """
+        Parse multiple nginx log lines into structured data
+
+        Args:
+            log_lines: List of nginx log lines
+
+        Returns:
+            List of structured log data dictionaries
+        """
+        results = []
+        for log_line in log_lines:
+            if log_line.strip():  # Skip empty lines
+                structured = self.structure_log_line(log_line.strip())
+                results.append(structured)
+        return results
+
+    def extract_search_keywords(self, natural_query: str) -> str:
+        """
+        Extract search keywords from natural language query
+
+        Args:
+            natural_query: Natural language query from user
+
+        Returns:
+            Search keywords suitable for text search
+        """
+        prompt = f"""Extract only the key search terms from this question. Return ONLY the important keywords that should be searched in logs, without any extra words or explanations.
+
+Question: {natural_query}
+
+Rules:
+- Extract only nouns, technical terms, and error types
+- Remove question words (what, when, where, how, why, find, show, provide, etc.)
+- Remove filler words (the, and, or, a, an, in, on, at, etc.)
+- Keep technical terms like "timeout", "error", "failure", "database", "authentication"
+- Keep specific identifiers if mentioned (user IDs, request IDs, endpoints)
+- Return 2-5 keywords maximum
+
+Keywords:"""
+
+        try:
+            result = subprocess.run(
+                ['ollama', 'run', self.model, prompt],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+
+            if result.returncode != 0:
+                # Fallback: return original query
+                return natural_query
+
+            keywords = result.stdout.strip()
+
+            # Clean up the response (remove quotes, extra whitespace)
+            keywords = keywords.replace('"', '').replace("'", '').strip()
+
+            # If response is empty or too long, return original
+            if not keywords or len(keywords) > 100:
+                return natural_query
+
+            return keywords
+
+        except Exception as e:
+            # Fallback: return original query
+            print(f"Keyword extraction failed: {e}")
+            return natural_query
 
     def translate_query_to_filter(self, query: str, schema: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -272,7 +404,8 @@ Return JSON only, no explanation:"""
         self,
         query: str,
         results: List[Dict[str, Any]],
-        found_count: int
+        found_count: int,
+        custom_instructions: Optional[str] = None
     ) -> Dict[str, str]:
         """
         Generate a natural language answer based on query and results
@@ -281,6 +414,7 @@ Return JSON only, no explanation:"""
             query: The original user query
             results: List of matching documents
             found_count: Number of results found
+            custom_instructions: Optional custom instruction template with {query}, {found_count}, {search_results} placeholders
 
         Returns:
             Dictionary with 'answer' and 'context' (the prompt sent to LLM)
@@ -303,7 +437,15 @@ Return JSON only, no explanation:"""
                 'text': doc.get('text', '')
             })
 
-        prompt = f"""You are a helpful assistant that answers questions based on search results.
+        # Use custom instructions if provided, otherwise use default
+        if custom_instructions:
+            # Replace placeholders in custom template
+            prompt = custom_instructions.replace('{query}', query)
+            prompt = prompt.replace('{found_count}', str(found_count))
+            prompt = prompt.replace('{search_results}', json.dumps(context, indent=2))
+        else:
+            # Default prompt
+            prompt = f"""You are a helpful assistant that answers questions based on search results.
 
 User Question: {query}
 

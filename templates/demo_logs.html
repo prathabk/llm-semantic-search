@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Analysis with Semantic Search - Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Prism.js for code highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+
+    <!-- Marked.js for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .demo-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 12px;
+        }
+
+        .demo-header .subtitle {
+            font-size: 1.25em;
+            color: var(--text-secondary);
+        }
+
+        .demo-section {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .demo-section h2 {
+            margin-top: 0;
+            color: var(--text);
+            font-size: 1.75em;
+            margin-bottom: 20px;
+        }
+
+        .log-viewer {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.8125em;
+            line-height: 1.8;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 16px 0;
+        }
+
+        .log-line {
+            margin: 4px 0;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .log-line:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .log-error {
+            color: #f48771;
+            background: rgba(244, 135, 113, 0.1);
+        }
+
+        .log-warn {
+            color: #dcdcaa;
+            background: rgba(220, 220, 170, 0.1);
+        }
+
+        .log-info {
+            color: #4ec9b0;
+        }
+
+        .log-debug {
+            color: #808080;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #4b5563;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .stat-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9375em;
+        }
+
+        .query-controls {
+            display: grid;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .control-group input,
+        .control-group select {
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        .results-container {
+            margin-top: 32px;
+        }
+
+        .insight-card {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+
+        .insight-card h3 {
+            margin-top: 0;
+            color: #92400e;
+        }
+
+        .insight-card ul {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .insight-card li {
+            margin: 8px 0;
+            color: #78350f;
+        }
+
+        /* Markdown content styling */
+        .markdown-content {
+            font-size: 1.0em;
+            line-height: 1.8;
+            color: #78350f;
+        }
+
+        .markdown-content h1,
+        .markdown-content h2,
+        .markdown-content h3 {
+            color: #92400e;
+            margin-top: 20px;
+            margin-bottom: 12px;
+        }
+
+        .markdown-content h1 {
+            font-size: 1.75em;
+            border-bottom: 2px solid #f59e0b;
+            padding-bottom: 8px;
+        }
+
+        .markdown-content h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid #fbbf24;
+            padding-bottom: 6px;
+        }
+
+        .markdown-content h3 {
+            font-size: 1.25em;
+        }
+
+        .markdown-content p {
+            margin: 12px 0;
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin: 12px 0;
+            padding-left: 28px;
+        }
+
+        .markdown-content li {
+            margin: 8px 0;
+        }
+
+        .markdown-content strong {
+            color: #92400e;
+            font-weight: 700;
+        }
+
+        .markdown-content code {
+            background: rgba(146, 64, 14, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.9em;
+        }
+
+        .markdown-content pre {
+            background: rgba(146, 64, 14, 0.1);
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .markdown-content blockquote {
+            border-left: 4px solid #f59e0b;
+            margin: 16px 0;
+            padding-left: 16px;
+            color: #92400e;
+            font-style: italic;
+        }
+
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+        }
+
+        .markdown-content th,
+        .markdown-content td {
+            border: 1px solid #fbbf24;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .markdown-content th {
+            background: rgba(251, 191, 36, 0.2);
+            font-weight: 600;
+        }
+
+        .sample-queries {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .query-chip {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9375em;
+        }
+
+        .query-chip:hover {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .collapsible {
+            margin-top: 20px;
+        }
+
+        .collapsible-header {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            padding: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .collapsible-header:hover {
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .collapsible-header h4 {
+            margin: 0;
+            font-size: 1.05em;
+            color: var(--text);
+        }
+
+        .collapsible-arrow {
+            font-size: 1.2em;
+            transition: transform 0.3s;
+        }
+
+        .collapsible-header.active .collapsible-arrow {
+            transform: rotate(90deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible-content.active {
+            max-height: 3000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .json-tree {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.875em;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .json-tree ul {
+            list-style: none;
+            padding-left: 24px;
+            margin: 4px 0;
+        }
+
+        .json-tree > ul {
+            padding-left: 0;
+        }
+
+        .json-tree li {
+            margin: 4px 0;
+        }
+
+        .json-key {
+            color: #0066cc;
+            font-weight: 600;
+        }
+
+        .json-string {
+            color: #22863a;
+        }
+
+        .json-number {
+            color: #005cc5;
+        }
+
+        .json-toggle {
+            cursor: pointer;
+            user-select: none;
+            display: inline-block;
+            width: 16px;
+            color: #6a737d;
+            font-weight: bold;
+        }
+
+        .json-toggle:hover {
+            color: var(--primary);
+        }
+
+        .json-collapsed > ul {
+            display: none;
+        }
+
+        .json-bracket {
+            color: #6a737d;
+            font-weight: bold;
+        }
+
+        .error-pattern {
+            background: #fee2e2;
+            border-left: 4px solid #dc2626;
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 4px;
+        }
+
+        .error-pattern h4 {
+            margin: 0 0 8px 0;
+            color: #991b1b;
+        }
+
+        .error-pattern .count {
+            font-weight: 700;
+            color: #dc2626;
+        }
+
+        .status-banner {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+            display: none;
+        }
+
+        .status-banner.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .status-banner.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .status-banner.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <a href="/demo" class="home-link">← Back to Demo Home</a>
+
+        <div class="demo-header">
+            <h1>📊 Log Analysis with Semantic Search</h1>
+            <p class="subtitle">Analyze Nginx logs using LLM-powered semantic search</p>
+        </div>
+
+        <div id="statusBanner" class="status-banner"></div>
+
+        <!-- Step 1: Sample Logs -->
+        <div class="demo-section">
+            <h2>📋 Step 1: Load Sample Logs</h2>
+            <p>Sample nginx access logs with requestId, userId, and various error patterns.</p>
+
+            <div class="collapsible">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h4>👁️ View Sample Logs (50 lines)</h4>
+                    <span class="collapsible-arrow">▶</span>
+                </div>
+                <div class="collapsible-content">
+                    <div class="log-viewer" id="sampleLogsViewer"></div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="loadSampleLogs()" id="loadLogsBtn">
+                Load Sample Logs →
+            </button>
+        </div>
+
+        <!-- Step 2: Structure & Store -->
+        <div class="demo-section" id="structureSection" style="display: none;">
+            <h2>🤖 Step 2: Structure & Store Logs</h2>
+            <p>Use LLM to extract structured data and store in Typesense.</p>
+
+            <div class="stats-grid" id="logStats"></div>
+
+            <div class="collapsible" id="structuredDataSection" style="display: none;">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <h4>📄 Structured Log Data (JSON Tree)</h4>
+                    <span class="collapsible-arrow">▶</span>
+                </div>
+                <div class="collapsible-content">
+                    <div class="json-tree" id="structuredLogs"></div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="structureAndStore()" id="structureBtn">
+                Structure & Store in Typesense →
+            </button>
+        </div>
+
+        <!-- Step 3: Query & Search -->
+        <div class="demo-section" id="querySection" style="display: none;">
+            <h2>🔍 Step 3: Semantic Search</h2>
+            <p>Search logs using natural language with filters.</p>
+
+            <div class="query-controls">
+                <div class="control-group">
+                    <label for="searchQuery">Your Question:</label>
+                    <input
+                        type="text"
+                        id="searchQuery"
+                        placeholder="e.g., Show me all authentication failures"
+                    >
+                </div>
+
+                <div class="filter-row">
+                    <div class="control-group">
+                        <label for="userIdFilter">User ID (optional):</label>
+                        <input type="text" id="userIdFilter" placeholder="e.g., user_123">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="requestIdFilter">Request ID (optional):</label>
+                        <input type="text" id="requestIdFilter" placeholder="e.g., req_abc123">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="logLevelFilter">Log Level:</label>
+                        <select id="logLevelFilter">
+                            <option value="">All Levels</option>
+                            <option value="ERROR">ERROR</option>
+                            <option value="WARN">WARN</option>
+                            <option value="INFO">INFO</option>
+                            <option value="DEBUG">DEBUG</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="modelSelect">LLM Model:</label>
+                        <select id="modelSelect">
+                            <option value="gemma3:270m">Gemma3 270M (Fastest)</option>
+                            <option value="gemma3:1b" selected>Gemma3 1B (Balanced)</option>
+                            <option value="gemma3:4b">Gemma3 4B (Better)</option>
+                            <option value="gemma3:12b">Gemma3 12B (Best)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sample-queries">
+                <div class="query-chip" onclick="setQuery('Show me all authentication failures')">
+                    🔐 Authentication failures
+                </div>
+                <div class="query-chip" onclick="setQuery('Find database timeout errors')">
+                    ⏱️ Database timeouts
+                </div>
+                <div class="query-chip" onclick="setQuery('What errors occurred for user_789')">
+                    👤 Errors for specific user
+                </div>
+                <div class="query-chip" onclick="setQuery('Show all 500 status codes')">
+                    🔴 5xx errors
+                </div>
+                <div class="query-chip" onclick="setQuery('Find slow API requests')">
+                    🐌 Slow requests
+                </div>
+                <div class="query-chip" onclick="setQuery('What are common error patterns')">
+                    🔎 Error patterns
+                </div>
+            </div>
+
+            <button class="btn" onclick="searchLogs()" id="searchBtn">
+                Search Logs →
+            </button>
+
+            <button class="btn btn-secondary" onclick="detectErrorPatterns()" id="patternBtn" style="margin-left: 12px;">
+                🔍 Detect Error Patterns
+            </button>
+        </div>
+
+        <!-- Results -->
+        <div class="results-container" id="resultsContainer" style="display: none;">
+            <div class="demo-section">
+                <h2>📊 Results</h2>
+
+                <div id="keywordExtractionInfo" style="display: none; background: #e0f2fe; border: 1px solid #0ea5e9; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 0.9375em;">
+                    <strong>🔍 Keyword Extraction:</strong>
+                    <span id="originalQuery" style="color: #64748b;"></span>
+                    →
+                    <span id="extractedKeywords" style="color: #0284c7; font-weight: 600;"></span>
+                </div>
+
+                <div id="insightSection"></div>
+
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h4>📄 Matching Logs (JSON Tree)</h4>
+                        <span class="collapsible-arrow">▶</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="json-tree" id="resultsJson"></div>
+                    </div>
+                </div>
+
+                <div class="collapsible" style="margin-top: 16px;">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h4>📋 Raw Logs</h4>
+                        <span class="collapsible-arrow">▶</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="log-viewer" id="resultsLogViewer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prism.js Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        // Sample nginx log data with realistic errors
+        const SAMPLE_LOGS = `2024-01-15 10:23:45 [INFO] 192.168.1.100 - GET /api/users - 200 - 45ms - requestId: req_001 userId: user_123
+2024-01-15 10:24:12 [ERROR] 192.168.1.101 - POST /api/auth/login - 401 - 120ms - requestId: req_002 userId: user_456 - Authentication failed: Invalid credentials
+2024-01-15 10:24:30 [INFO] 192.168.1.102 - GET /api/products - 200 - 67ms - requestId: req_003 userId: user_789
+2024-01-15 10:25:15 [ERROR] 192.168.1.103 - GET /api/orders - 500 - 5023ms - requestId: req_004 userId: user_123 - Database connection timeout
+2024-01-15 10:25:22 [WARN] 192.168.1.104 - POST /api/checkout - 429 - 234ms - requestId: req_005 userId: user_456 - Rate limit exceeded
+2024-01-15 10:26:03 [INFO] 192.168.1.105 - GET /api/profile - 200 - 89ms - requestId: req_006 userId: user_789
+2024-01-15 10:26:45 [ERROR] 192.168.1.106 - POST /api/payment - 500 - 3456ms - requestId: req_007 userId: user_234 - Payment gateway timeout
+2024-01-15 10:27:12 [ERROR] 192.168.1.107 - POST /api/auth/login - 401 - 98ms - requestId: req_008 userId: user_567 - Authentication failed: Account locked
+2024-01-15 10:27:30 [INFO] 192.168.1.108 - GET /api/dashboard - 200 - 156ms - requestId: req_009 userId: user_123
+2024-01-15 10:28:01 [ERROR] 192.168.1.109 - GET /api/reports - 500 - 4567ms - requestId: req_010 userId: user_789 - Database connection timeout
+2024-01-15 10:28:45 [INFO] 192.168.1.110 - POST /api/comments - 201 - 234ms - requestId: req_011 userId: user_456
+2024-01-15 10:29:12 [WARN] 192.168.1.111 - GET /api/search - 504 - 30012ms - requestId: req_012 userId: user_234 - Request timeout
+2024-01-15 10:29:45 [ERROR] 192.168.1.112 - POST /api/upload - 413 - 567ms - requestId: req_013 userId: user_567 - File size exceeds limit
+2024-01-15 10:30:23 [INFO] 192.168.1.113 - GET /api/notifications - 200 - 78ms - requestId: req_014 userId: user_123
+2024-01-15 10:31:01 [ERROR] 192.168.1.114 - GET /api/analytics - 500 - 3892ms - requestId: req_015 userId: user_789 - Database connection timeout
+2024-01-15 10:31:34 [INFO] 192.168.1.115 - POST /api/feedback - 201 - 123ms - requestId: req_016 userId: user_456
+2024-01-15 10:32:12 [ERROR] 192.168.1.116 - POST /api/auth/login - 401 - 145ms - requestId: req_017 userId: user_890 - Authentication failed: Invalid credentials
+2024-01-15 10:32:45 [WARN] 192.168.1.117 - GET /api/export - 429 - 89ms - requestId: req_018 userId: user_234 - Rate limit exceeded
+2024-01-15 10:33:23 [INFO] 192.168.1.118 - GET /api/settings - 200 - 67ms - requestId: req_019 userId: user_567
+2024-01-15 10:34:01 [ERROR] 192.168.1.119 - POST /api/transaction - 500 - 4123ms - requestId: req_020 userId: user_123 - Database connection timeout
+2024-01-15 10:34:34 [INFO] 192.168.1.120 - GET /api/history - 200 - 234ms - requestId: req_021 userId: user_789
+2024-01-15 10:35:12 [ERROR] 192.168.1.121 - GET /api/inventory - 500 - 3678ms - requestId: req_022 userId: user_456 - Database connection timeout
+2024-01-15 10:35:45 [WARN] 192.168.1.122 - POST /api/batch - 507 - 1234ms - requestId: req_023 userId: user_234 - Insufficient storage
+2024-01-15 10:36:23 [INFO] 192.168.1.123 - GET /health - 200 - 12ms - requestId: req_024 userId: system
+2024-01-15 10:37:01 [ERROR] 192.168.1.124 - POST /api/auth/login - 401 - 167ms - requestId: req_025 userId: user_999 - Authentication failed: Invalid credentials
+2024-01-15 10:37:34 [INFO] 192.168.1.125 - GET /api/metrics - 200 - 345ms - requestId: req_026 userId: user_123
+2024-01-15 10:38:12 [ERROR] 192.168.1.126 - GET /api/data/export - 500 - 2890ms - requestId: req_027 userId: user_789 - Redis connection failed
+2024-01-15 10:38:45 [WARN] 192.168.1.127 - POST /api/webhook - 503 - 678ms - requestId: req_028 userId: user_456 - Service unavailable
+2024-01-15 10:39:23 [INFO] 192.168.1.128 - GET /api/stats - 200 - 189ms - requestId: req_029 userId: user_567
+2024-01-15 10:40:01 [ERROR] 192.168.1.129 - POST /api/subscription - 500 - 3234ms - requestId: req_030 userId: user_234 - Database connection timeout
+2024-01-15 10:40:34 [INFO] 192.168.1.130 - GET /api/categories - 200 - 98ms - requestId: req_031 userId: user_890
+2024-01-15 10:41:12 [ERROR] 192.168.1.131 - GET /api/recommendations - 500 - 4567ms - requestId: req_032 userId: user_123 - Database connection timeout
+2024-01-15 10:41:45 [INFO] 192.168.1.132 - POST /api/review - 201 - 234ms - requestId: req_033 userId: user_789
+2024-01-15 10:42:23 [ERROR] 192.168.1.133 - POST /api/auth/login - 401 - 123ms - requestId: req_034 userId: user_111 - Authentication failed: Invalid credentials
+2024-01-15 10:43:01 [WARN] 192.168.1.134 - GET /api/download - 404 - 45ms - requestId: req_035 userId: user_456 - Resource not found
+2024-01-15 10:43:34 [INFO] 192.168.1.135 - GET /api/bookmarks - 200 - 145ms - requestId: req_036 userId: user_234
+2024-01-15 10:44:12 [ERROR] 192.168.1.136 - POST /api/process - 500 - 3789ms - requestId: req_037 userId: user_567 - Database connection timeout
+2024-01-15 10:44:45 [INFO] 192.168.1.137 - GET /api/tags - 200 - 78ms - requestId: req_038 userId: user_890
+2024-01-15 10:45:23 [ERROR] 192.168.1.138 - GET /api/aggregate - 500 - 2456ms - requestId: req_039 userId: user_789 - Query execution timeout
+2024-01-15 10:46:01 [WARN] 192.168.1.139 - POST /api/import - 413 - 890ms - requestId: req_040 userId: user_123 - Payload too large
+2024-01-15 10:46:34 [INFO] 192.168.1.140 - GET /api/permissions - 200 - 123ms - requestId: req_041 userId: user_456
+2024-01-15 10:47:12 [ERROR] 192.168.1.141 - POST /api/auth/reset - 500 - 3567ms - requestId: req_042 userId: user_234 - Email service timeout
+2024-01-15 10:47:45 [INFO] 192.168.1.142 - GET /api/sessions - 200 - 189ms - requestId: req_043 userId: user_567
+2024-01-15 10:48:23 [ERROR] 192.168.1.143 - GET /api/logs - 500 - 4234ms - requestId: req_044 userId: user_890 - Database connection timeout
+2024-01-15 10:49:01 [INFO] 192.168.1.144 - POST /api/flag - 201 - 56ms - requestId: req_045 userId: user_111
+2024-01-15 10:49:34 [ERROR] 192.168.1.145 - POST /api/auth/login - 401 - 178ms - requestId: req_046 userId: user_222 - Authentication failed: Invalid credentials
+2024-01-15 10:50:12 [WARN] 192.168.1.146 - GET /api/cache - 503 - 234ms - requestId: req_047 userId: user_789 - Redis unavailable
+2024-01-15 10:50:45 [INFO] 192.168.1.147 - GET /api/preferences - 200 - 167ms - requestId: req_048 userId: user_123
+2024-01-15 10:51:23 [ERROR] 192.168.1.148 - POST /api/backup - 500 - 5123ms - requestId: req_049 userId: user_456 - Database connection timeout
+2024-01-15 10:52:01 [INFO] 192.168.1.149 - GET /api/version - 200 - 23ms - requestId: req_050 userId: system`;
+
+        let structuredLogs = [];
+        let currentModel = 'gemma3:1b';
+
+        // Toggle collapsible sections
+        function toggleCollapsible(header) {
+            header.classList.toggle('active');
+            const content = header.nextElementSibling;
+            content.classList.toggle('active');
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const banner = document.getElementById('statusBanner');
+            banner.textContent = message;
+            banner.className = `status-banner ${type}`;
+            banner.style.display = 'block';
+
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 5000);
+        }
+
+        // Set loading state
+        function setLoading(btnId, isLoading) {
+            const btn = document.getElementById(btnId);
+            if (isLoading) {
+                btn.setAttribute('data-original-text', btn.innerHTML);
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner"></span>' + btn.textContent.replace('→', '');
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = btn.getAttribute('data-original-text') || btn.innerHTML;
+            }
+        }
+
+        // Load sample logs
+        function loadSampleLogs() {
+            const viewer = document.getElementById('sampleLogsViewer');
+            const lines = SAMPLE_LOGS.split('\n');
+
+            viewer.innerHTML = lines.map(line => {
+                let className = 'log-line';
+                if (line.includes('[ERROR]')) className += ' log-error';
+                else if (line.includes('[WARN]')) className += ' log-warn';
+                else if (line.includes('[INFO]')) className += ' log-info';
+                else if (line.includes('[DEBUG]')) className += ' log-debug';
+
+                return `<div class="${className}">${line}</div>`;
+            }).join('');
+
+            document.getElementById('structureSection').style.display = 'block';
+            showStatus('Sample logs loaded successfully! 50 lines ready.', 'success');
+        }
+
+        // Structure and store logs
+        async function structureAndStore() {
+            setLoading('structureBtn', true);
+
+            try {
+                const response = await fetch('/api/structure', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        texts: SAMPLE_LOGS.split('\n').filter(line => line.trim()),
+                        model: currentModel,
+                        log_format: true
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    structuredLogs = result.data;
+
+                    // Show stats
+                    const stats = analyzeLogStats(structuredLogs);
+                    displayLogStats(stats);
+
+                    // Show structured data tree
+                    renderJsonTree(structuredLogs.slice(0, 5), document.getElementById('structuredLogs'));
+                    document.getElementById('structuredDataSection').style.display = 'block';
+
+                    // Store in Typesense
+                    await storeInTypesense(structuredLogs);
+
+                    document.getElementById('querySection').style.display = 'block';
+                    showStatus(`Successfully structured and stored ${result.count} log entries!`, 'success');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                setLoading('structureBtn', false);
+            }
+        }
+
+        // Analyze log statistics
+        function analyzeLogStats(logs) {
+            const stats = {
+                total: logs.length,
+                errors: logs.filter(l => l.log_level === 'ERROR').length,
+                warnings: logs.filter(l => l.log_level === 'WARN').length,
+                info: logs.filter(l => l.log_level === 'INFO').length,
+                uniqueUsers: new Set(logs.map(l => l.user_id).filter(Boolean)).size
+            };
+            return stats;
+        }
+
+        // Display log statistics
+        function displayLogStats(stats) {
+            document.getElementById('logStats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total}</div>
+                    <div class="stat-label">Total Logs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: #dc2626;">${stats.errors}</div>
+                    <div class="stat-label">Errors</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: #f59e0b;">${stats.warnings}</div>
+                    <div class="stat-label">Warnings</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: #10b981;">${stats.info}</div>
+                    <div class="stat-label">Info</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.uniqueUsers}</div>
+                    <div class="stat-label">Unique Users</div>
+                </div>
+            `;
+        }
+
+        // Store in Typesense
+        async function storeInTypesense(logs) {
+            const response = await fetch('/api/store', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    documents: logs,
+                    recreate: true,
+                    collection_name: 'llm-log-analysis'
+                })
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error);
+            }
+        }
+
+        // Set query from chip
+        function setQuery(query) {
+            document.getElementById('searchQuery').value = query;
+        }
+
+        // Search logs
+        async function searchLogs() {
+            const query = document.getElementById('searchQuery').value;
+            const userId = document.getElementById('userIdFilter').value;
+            const requestId = document.getElementById('requestIdFilter').value;
+            const logLevel = document.getElementById('logLevelFilter').value;
+            const selectedModel = document.getElementById('modelSelect').value;
+
+            if (!query.trim()) {
+                showStatus('Please enter a search query', 'error');
+                return;
+            }
+
+            setLoading('searchBtn', true);
+
+            try {
+                // Build filter
+                let filters = [];
+                if (userId) filters.push(`user_id:=${userId}`);
+                if (requestId) filters.push(`request_id:=${requestId}`);
+                if (logLevel) filters.push(`log_level:=${logLevel}`);
+
+                // Custom instructions for log analysis
+                const logInstructions = `You are a log analysis assistant. Answer the user's question based on the log entries provided.
+
+User Question: {query}
+
+Log Entries Found ({found_count} total):
+{search_results}
+
+Instructions:
+- Analyze the log entries and answer the question accurately
+- Count errors, warnings, or specific patterns as requested
+- Identify the requestId, userId, timestamp, and error messages when relevant
+- If asked about timeouts, list all timeout errors with details
+- If asked about authentication failures, list all auth errors
+- If asked about specific users, filter results to that user
+- Format your response using markdown for better readability
+- Use **bold** for important findings
+- Use bullet points for lists
+- Use headings (##) to organize sections
+- Provide a clear, concise summary of findings
+- Include relevant details like status codes, response times, error messages
+
+Answer:`;
+
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        model: selectedModel,
+                        generative: true,
+                        collection_name: 'llm-log-analysis',
+                        text_search: true,
+                        query_by: 'text,error_message',
+                        filter_by: filters.join(' && '),
+                        custom_instructions: logInstructions
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(result, false, query);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                setLoading('searchBtn', false);
+            }
+        }
+
+        // Detect error patterns
+        async function detectErrorPatterns() {
+            setLoading('patternBtn', true);
+            const selectedModel = document.getElementById('modelSelect').value;
+
+            try {
+                // Custom instructions for error pattern analysis
+                const patternInstructions = `You are a log analysis assistant specializing in error pattern detection.
+
+Analyze the following ERROR log entries and identify patterns:
+
+Error Logs ({found_count} total errors):
+{search_results}
+
+Instructions:
+- Identify the most common error types (e.g., authentication failures, database timeouts, rate limits)
+- Count how many times each error pattern occurs
+- Note which users or endpoints are most affected
+- Identify any time patterns (if multiple errors at similar times)
+- Suggest potential root causes
+- Provide actionable insights for developers
+- Format your response using markdown for better readability
+- Use **bold** for important findings
+- Use bullet points for lists
+- Use headings (##) to organize sections
+
+Provide a structured analysis with:
+1. Most common error patterns (with counts)
+2. Affected users/endpoints
+3. Key insights and recommendations
+
+Analysis:`;
+
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: '*',
+                        model: selectedModel,
+                        generative: true,
+                        collection_name: 'llm-log-analysis',
+                        text_search: true,
+                        query_by: 'text,error_message',
+                        filter_by: 'log_level:=ERROR',
+                        custom_instructions: patternInstructions
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(result, true, 'Analyze all ERROR logs for patterns');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                setLoading('patternBtn', false);
+            }
+        }
+
+        // Display results
+        function displayResults(result, isPatternAnalysis = false, originalQuery = '') {
+            const container = document.getElementById('resultsContainer');
+            const insightSection = document.getElementById('insightSection');
+            const keywordInfo = document.getElementById('keywordExtractionInfo');
+
+            // Show keyword extraction info if available
+            if (result.extracted_keywords && originalQuery && result.extracted_keywords !== originalQuery) {
+                document.getElementById('originalQuery').textContent = `"${originalQuery}"`;
+                document.getElementById('extractedKeywords').textContent = `"${result.extracted_keywords}"`;
+                keywordInfo.style.display = 'block';
+            } else {
+                keywordInfo.style.display = 'none';
+            }
+
+            // Render markdown answer
+            const markdownAnswer = marked.parse(result.answer);
+
+            // Show insight
+            insightSection.innerHTML = `
+                <div class="insight-card">
+                    <h3>${isPatternAnalysis ? '🔍 Error Pattern Analysis' : '💡 Answer'}</h3>
+                    <div class="markdown-content">${markdownAnswer}</div>
+                    <p style="margin-top: 16px; color: #92400e; font-size: 0.9375em;">
+                        <strong>Found:</strong> ${result.found} matching log entries
+                    </p>
+                </div>
+            `;
+
+            // Show matching logs as JSON tree
+            const hits = result.results.hits || [];
+            const logDocs = hits.map(h => h.document);
+            renderJsonTree(logDocs, document.getElementById('resultsJson'));
+
+            // Show raw logs
+            const logViewer = document.getElementById('resultsLogViewer');
+            logViewer.innerHTML = logDocs.map(doc => {
+                const line = doc.raw_log || doc.text || '';
+                let className = 'log-line';
+                if (doc.log_level === 'ERROR') className += ' log-error';
+                else if (doc.log_level === 'WARN') className += ' log-warn';
+                else if (doc.log_level === 'INFO') className += ' log-info';
+
+                return `<div class="${className}">${line}</div>`;
+            }).join('');
+
+            container.style.display = 'block';
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // JSON Tree Renderer (same as before)
+        function renderJsonTree(data, container) {
+            container.innerHTML = '';
+            const ul = document.createElement('ul');
+            ul.style.paddingLeft = '0';
+            const tree = createJsonTree(data);
+            ul.appendChild(tree);
+            container.appendChild(ul);
+        }
+
+        function createJsonTree(data, key = null) {
+            const li = document.createElement('li');
+
+            if (Array.isArray(data)) {
+                const toggle = document.createElement('span');
+                toggle.className = 'json-toggle';
+                toggle.textContent = '▼';
+                toggle.onclick = function(e) {
+                    e.stopPropagation();
+                    li.classList.toggle('json-collapsed');
+                    toggle.textContent = li.classList.contains('json-collapsed') ? '▶' : '▼';
+                };
+
+                const label = document.createElement('span');
+                if (key !== null) {
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'json-key';
+                    keySpan.textContent = key;
+                    label.appendChild(keySpan);
+                    label.appendChild(document.createTextNode(': '));
+                }
+
+                const bracket = document.createElement('span');
+                bracket.className = 'json-bracket';
+                bracket.textContent = '[';
+                label.appendChild(bracket);
+
+                const count = document.createElement('span');
+                count.style.color = '#6a737d';
+                count.style.fontSize = '0.9em';
+                count.style.marginLeft = '6px';
+                count.textContent = data.length + (data.length === 1 ? ' item' : ' items');
+                label.appendChild(count);
+
+                li.appendChild(toggle);
+                li.appendChild(label);
+
+                if (data.length > 0) {
+                    const ul = document.createElement('ul');
+                    data.forEach((item, index) => {
+                        ul.appendChild(createJsonTree(item, index));
+                    });
+                    li.appendChild(ul);
+
+                    const closeBracket = document.createElement('span');
+                    closeBracket.className = 'json-bracket';
+                    closeBracket.textContent = ']';
+                    ul.appendChild(closeBracket);
+                }
+
+            } else if (typeof data === 'object' && data !== null) {
+                const toggle = document.createElement('span');
+                toggle.className = 'json-toggle';
+                toggle.textContent = '▼';
+                toggle.onclick = function(e) {
+                    e.stopPropagation();
+                    li.classList.toggle('json-collapsed');
+                    toggle.textContent = li.classList.contains('json-collapsed') ? '▶' : '▼';
+                };
+
+                const label = document.createElement('span');
+                if (key !== null) {
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'json-key';
+                    keySpan.textContent = key;
+                    label.appendChild(keySpan);
+                    label.appendChild(document.createTextNode(': '));
+                }
+
+                const bracket = document.createElement('span');
+                bracket.className = 'json-bracket';
+                bracket.textContent = '{';
+                label.appendChild(bracket);
+
+                const keys = Object.keys(data);
+                const count = document.createElement('span');
+                count.style.color = '#6a737d';
+                count.style.fontSize = '0.9em';
+                count.style.marginLeft = '6px';
+                count.textContent = keys.length + ' properties';
+                label.appendChild(count);
+
+                li.appendChild(toggle);
+                li.appendChild(label);
+
+                if (keys.length > 0) {
+                    const ul = document.createElement('ul');
+                    keys.forEach((k) => {
+                        ul.appendChild(createJsonTree(data[k], k));
+                    });
+                    li.appendChild(ul);
+
+                    const closeBracket = document.createElement('span');
+                    closeBracket.className = 'json-bracket';
+                    closeBracket.textContent = '}';
+                    ul.appendChild(closeBracket);
+                }
+
+            } else {
+                const label = document.createElement('span');
+
+                if (key !== null) {
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'json-key';
+                    keySpan.textContent = key;
+                    label.appendChild(keySpan);
+                    label.appendChild(document.createTextNode(': '));
+                }
+
+                const valueSpan = document.createElement('span');
+                if (typeof data === 'string') {
+                    valueSpan.className = 'json-string';
+                    valueSpan.textContent = '"' + data + '"';
+                } else if (typeof data === 'number') {
+                    valueSpan.className = 'json-number';
+                    valueSpan.textContent = data;
+                } else if (typeof data === 'boolean') {
+                    valueSpan.style.color = '#d73a49';
+                    valueSpan.textContent = data;
+                } else if (data === null) {
+                    valueSpan.style.color = '#6f42c1';
+                    valueSpan.textContent = 'null';
+                }
+                label.appendChild(valueSpan);
+
+                li.appendChild(label);
+            }
+
+            return li;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-populate sample logs viewer
+            const viewer = document.getElementById('sampleLogsViewer');
+            const lines = SAMPLE_LOGS.split('\n').filter(line => line.trim());
+
+            viewer.innerHTML = lines.map(line => {
+                let className = 'log-line';
+                if (line.includes('[ERROR]')) className += ' log-error';
+                else if (line.includes('[WARN]')) className += ' log-warn';
+                else if (line.includes('[INFO]')) className += ' log-info';
+                else if (line.includes('[DEBUG]')) className += ' log-debug';
+
+                return `<div class="${className}">${line}</div>`;
+            }).join('');
+
+            // Auto-expand the collapsible to show logs
+            const collapsibleHeader = document.querySelector('.collapsible-header');
+            const collapsibleContent = collapsibleHeader.nextElementSibling;
+            collapsibleHeader.classList.add('active');
+            collapsibleContent.classList.add('active');
+        });
+
+        document.getElementById('searchQuery').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchLogs();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -102,6 +102,11 @@ def demo_typesense_gemma():
     """Typesense similarity search demo with explicit Gemma embeddings"""
     return render_template('demo_typesense_gemma.html')
 
+@app.route('/demo/logs')
+def demo_logs():
+    """Log analysis demo - semantic search on nginx application logs"""
+    return render_template('demo_logs.html')
+
 # API Endpoints
 
 @app.route('/api/models', methods=['GET'])
@@ -166,12 +171,18 @@ def structure_texts():
         texts = data.get('texts', [])
         model = data.get('model', 'gemma3:1b')
         schema_hint = data.get('schema_hint')
+        log_format = data.get('log_format', False)  # Flag to use log parsing instead of LLM
 
         if not texts:
             return jsonify({'success': False, 'error': 'No texts provided'}), 400
 
         ollama = OllamaService(model=model)
-        structured_data = ollama.structure_batch(texts, schema_hint)
+
+        # Use log parsing if log_format flag is set
+        if log_format:
+            structured_data = ollama.structure_logs_batch(texts)
+        else:
+            structured_data = ollama.structure_batch(texts, schema_hint)
 
         return jsonify({
             'success': True,
@@ -192,9 +203,11 @@ def store_documents():
 
         documents = data.get('documents', [])
         recreate = data.get('recreate', True)
+        collection_name = data.get('collection_name', COLLECTION_NAME)  # Use custom collection name if provided
 
         print(f"Documents count: {len(documents)}")
         print(f"Recreate mode: {recreate}")
+        print(f"Collection name: {collection_name}")
 
         if not documents:
             print("ERROR: No documents provided")
@@ -205,14 +218,18 @@ def store_documents():
             host=TYPESENSE_HOST,
             port=TYPESENSE_PORT,
             api_key=TYPESENSE_API_KEY,
-            collection_name=COLLECTION_NAME
+            collection_name=collection_name
         )
 
         # Create/recreate collection
         if recreate:
             print("Creating/recreating collection...")
             # Clear existing data and create fresh collection
-            collection_info = ts.create_collection()
+            # Use log schema for log collections
+            if collection_name == 'llm-log-analysis':
+                collection_info = ts.create_collection_for_logs()
+            else:
+                collection_info = ts.create_collection()
             print(f"Collection created: {collection_info}")
         else:
             print("Append mode - checking if collection exists...")
@@ -223,8 +240,11 @@ def store_documents():
                 print(f"Collection exists: {collection_info.get('name')}")
             except Exception as e:
                 print(f"Collection doesn't exist, creating it: {e}")
-                # Collection doesn't exist, create it
-                collection_info = ts.create_collection()
+                # Collection doesn't exist, create it with appropriate schema
+                if collection_name == 'llm-log-analysis':
+                    collection_info = ts.create_collection_for_logs()
+                else:
+                    collection_info = ts.create_collection()
                 print(f"Collection created: {collection_info}")
 
         # Insert documents
@@ -235,7 +255,7 @@ def store_documents():
         response = {
             'success': True,
             'inserted': result['count'],
-            'collection': COLLECTION_NAME
+            'collection': collection_name
         }
         print(f"Sending response: {response}")
         return jsonify(response)
@@ -256,8 +276,15 @@ def query_search():
         model = data.get('model', 'gemma3:1b')
         generative = data.get('generative', False)  # New flag for generative output
         per_page = data.get('per_page', 250)  # Allow custom per_page limit
+        custom_instructions = data.get('custom_instructions')  # Optional custom instructions
+        collection_name = data.get('collection_name', COLLECTION_NAME)  # Use custom collection name if provided
+        text_search = data.get('text_search', False)  # Flag for direct text search (no LLM translation)
+        query_by = data.get('query_by', 'text')  # Fields to search in
+        filter_by = data.get('filter_by', '')  # Optional filters
 
-        print(f"Query: '{query}', Model: {model}, Generative: {generative}, Per Page: {per_page}")
+        print(f"Query: '{query}', Model: {model}, Generative: {generative}, Per Page: {per_page}, Collection: {collection_name}, Text Search: {text_search}")
+        if custom_instructions:
+            print(f"Using custom instructions: {custom_instructions[:100]}...")
 
         if not query:
             print("ERROR: No query provided")
@@ -269,7 +296,7 @@ def query_search():
             host=TYPESENSE_HOST,
             port=TYPESENSE_PORT,
             api_key=TYPESENSE_API_KEY,
-            collection_name=COLLECTION_NAME
+            collection_name=collection_name
         )
 
         # Get collection schema
@@ -282,23 +309,48 @@ def query_search():
             print(f"Warning: Could not get collection info: {e}")
             schema = {}
 
-        # For wildcard query, skip LLM translation
-        if query == '*':
+        # Initialize Ollama if needed for generative answers or keyword extraction
+        ollama = None
+        if generative or text_search or query != '*':
+            ollama = OllamaService(model=model)
+
+        # Determine query parameters based on search type
+        if text_search:
+            # Extract keywords from natural language query for better text search
+            print(f"Original query: '{query}'")
+            search_keywords = ollama.extract_search_keywords(query)
+            print(f"Extracted keywords: '{search_keywords}'")
+
+            # Direct text search (for logs and other text-based collections)
+            print(f"Using direct text search: query='{search_keywords}', query_by='{query_by}', filter_by='{filter_by}'")
+            query_params = {
+                'q': search_keywords,
+                'filter_by': filter_by,
+                'query_by': query_by
+            }
+        elif query == '*':
             print("Wildcard query detected, skipping LLM translation")
             query_params = {'q': '*', 'filter_by': ''}
         else:
-            # Initialize Ollama only if needed
-            ollama = OllamaService(model=model)
-            # Translate query to Typesense filter
+            # Translate query to Typesense filter using LLM
             print("Translating query to filter...")
             query_params = ollama.translate_query_to_filter(query, schema)
             print(f"Query params: {query_params}")
 
-        # Search Typesense (use hybrid search for better results)
+        # Search Typesense
         print(f"Searching Typesense with q='{query_params.get('q')}', filter_by='{query_params.get('filter_by')}', per_page={per_page}")
 
-        # Use hybrid search for static queries (combines text search with filters)
-        if not generative:
+        # Perform search based on type
+        if text_search:
+            # Use text search for logs
+            search_results = ts.search(
+                q=query_params.get('q', '*'),
+                query_by=query_params.get('query_by', 'text'),
+                filter_by=query_params.get('filter_by', ''),
+                per_page=per_page
+            )
+        elif not generative:
+            # Use hybrid search for static queries (combines text search with filters)
             print("Using hybrid search for static query")
             search_results = ts.hybrid_search(
                 query=query_params.get('q', '*'),
@@ -322,7 +374,7 @@ def query_search():
 
         if generative and found_count > 0:
             # Use LLM to generate natural language answer
-            llm_response = ollama.generate_natural_answer(query, hits, found_count)
+            llm_response = ollama.generate_natural_answer(query, hits, found_count, custom_instructions)
             answer = llm_response.get('answer', 'Error generating answer')
             llm_context = llm_response.get('context', '')
         else:
@@ -369,6 +421,10 @@ def query_search():
         # Add LLM context if available
         if llm_context:
             response_data['llm_context'] = llm_context
+
+        # Add extracted keywords if text_search was used
+        if text_search and 'q' in query_params:
+            response_data['extracted_keywords'] = query_params['q']
 
         return jsonify(response_data)
     except Exception as e:

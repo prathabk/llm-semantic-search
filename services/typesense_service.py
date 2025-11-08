@@ -120,6 +120,49 @@ class TypesenseService:
 
         return response.json()
 
+    def create_collection_for_logs(self) -> Dict[str, Any]:
+        """
+        Create collection specifically for application logs
+
+        Returns:
+            API response
+        """
+        schema = {
+            "name": self.collection_name,
+            "fields": [
+                {"name": "timestamp", "type": "string", "facet": True, "optional": True},
+                {"name": "log_level", "type": "string", "facet": True, "optional": True},
+                {"name": "ip_address", "type": "string", "facet": True, "optional": True},
+                {"name": "http_method", "type": "string", "facet": True, "optional": True},
+                {"name": "endpoint", "type": "string", "facet": True, "optional": True},
+                {"name": "status_code", "type": "int32", "facet": True, "optional": True},
+                {"name": "response_time", "type": "int32", "optional": True},
+                {"name": "request_id", "type": "string", "facet": True, "optional": True},
+                {"name": "user_id", "type": "string", "facet": True, "optional": True},
+                {"name": "error_message", "type": "string", "optional": True},
+                {"name": "text", "type": "string"},
+                {"name": "parse_error", "type": "bool", "optional": True}
+            ]
+        }
+
+        # Delete collection if exists
+        try:
+            self.delete_collection()
+        except:
+            pass  # Collection might not exist
+
+        # Create new collection
+        response = requests.post(
+            f'{self.base_url}/collections',
+            json=schema,
+            headers=self.headers
+        )
+
+        if response.status_code not in [200, 201]:
+            raise Exception(f"Failed to create collection: {response.text}")
+
+        return response.json()
+
     def insert_documents(self, documents: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Insert multiple documents into collection

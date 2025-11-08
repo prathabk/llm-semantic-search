@@ -460,6 +460,120 @@
             color: var(--text-secondary);
             margin-top: 6px;
         }
+
+        .advanced-section {
+            margin-top: 16px;
+            margin-bottom: 24px;
+            border: 2px solid #6366f1;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .advanced-header {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .advanced-header:hover {
+            background: linear-gradient(135deg, #c7d2fe 0%, #a5b4fc 100%);
+        }
+
+        .advanced-header h4 {
+            margin: 0;
+            color: #312e81;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .advanced-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: #eef2ff;
+        }
+
+        .advanced-content.active {
+            max-height: 1000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .advanced-inner {
+            padding: 20px;
+        }
+
+        .instruction-template {
+            width: 100%;
+            min-height: 250px;
+            padding: 16px;
+            border: 2px solid #a5b4fc;
+            border-radius: 8px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.875em;
+            line-height: 1.6;
+            resize: vertical;
+            background: white;
+        }
+
+        .instruction-template:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .template-helpers {
+            background: white;
+            border: 1px solid #a5b4fc;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-size: 0.875em;
+        }
+
+        .template-helpers code {
+            background: #e0e7ff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'SF Mono', Monaco, monospace;
+            color: #312e81;
+        }
+
+        .btn-reset {
+            background: #6b7280;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9375em;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-top: 12px;
+        }
+
+        .btn-reset:hover {
+            background: #4b5563;
+        }
+
+        .custom-instructions-indicator {
+            display: none;
+            background: #e0e7ff;
+            border: 1px solid #6366f1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.875em;
+            color: #312e81;
+            margin-top: 12px;
+        }
+
+        .custom-instructions-indicator.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -534,6 +648,45 @@
                 </div>
             </div>
 
+            <!-- Advanced: Custom Instructions -->
+            <div class="advanced-section">
+                <div class="advanced-header" onclick="toggleAdvanced()">
+                    <h4>
+                        <span>⚙️</span>
+                        <span>Advanced: Customize LLM Instructions</span>
+                    </h4>
+                    <span class="collapsible-arrow" id="advancedArrow">▶</span>
+                </div>
+                <div class="advanced-content" id="advancedContent">
+                    <div class="advanced-inner">
+                        <div class="template-helpers">
+                            <strong>📝 Template Variables:</strong><br>
+                            Use these placeholders in your instructions:<br>
+                            <code>{query}</code> - User's question<br>
+                            <code>{found_count}</code> - Number of results found<br>
+                            <code>{search_results}</code> - JSON array of matching documents
+                        </div>
+
+                        <label for="instructionTemplate" style="font-weight: 600; display: block; margin-bottom: 8px; color: #312e81;">
+                            Instruction Template:
+                        </label>
+                        <textarea
+                            id="instructionTemplate"
+                            class="instruction-template"
+                            placeholder="Enter custom instructions for the LLM..."
+                        ></textarea>
+
+                        <button class="btn-reset" onclick="resetInstructions()">
+                            ↺ Reset to Default
+                        </button>
+
+                        <div class="custom-instructions-indicator" id="customIndicator">
+                            ⚠️ Using custom instructions
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <button class="btn" onclick="executeQuery()" id="queryBtn">
                 Search →
             </button>
@@ -600,12 +753,71 @@
     <script>
         const jsonFormatter = new JSONFormatter({ collapsible: false });
 
+        // Default instruction template
+        const DEFAULT_INSTRUCTIONS = `You are a helpful assistant that answers questions based on search results.
+
+User Question: {query}
+
+Search Results ({found_count} found):
+{search_results}
+
+Instructions:
+- Answer the question ACCURATELY by counting ALL results provided above
+- The search results already contain ONLY the matching documents, so count ALL of them
+- If asked "how many people", count the total number of results ({found_count})
+- If asked "how many", provide ACCURATE count based on ALL {found_count} results
+- When counting by gender: count each gender from ALL results (boy/girl/unknown)
+- Example: If there are 2 results with blue color, say "2 people like blue color"
+- If asked "who" or "list names", list ALL names from the results
+- If asked about preferences, describe what ALL of them like
+- DO NOT filter or reduce the count - use ALL {found_count} results
+- Be precise with numbers and list names when relevant
+- Use natural language
+
+Answer based on ALL {found_count} results:`;
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            resetInstructions();
+        });
+
         // Toggle collapsible sections
         function toggleCollapsible(header) {
             header.classList.toggle('active');
             const content = header.nextElementSibling;
             content.classList.toggle('active');
         }
+
+        // Toggle advanced section
+        function toggleAdvanced() {
+            const content = document.getElementById('advancedContent');
+            const arrow = document.getElementById('advancedArrow');
+            content.classList.toggle('active');
+            arrow.textContent = content.classList.contains('active') ? '▼' : '▶';
+        }
+
+        // Reset instructions to default
+        function resetInstructions() {
+            document.getElementById('instructionTemplate').value = DEFAULT_INSTRUCTIONS;
+            updateCustomIndicator();
+        }
+
+        // Update custom indicator
+        function updateCustomIndicator() {
+            const template = document.getElementById('instructionTemplate').value.trim();
+            const indicator = document.getElementById('customIndicator');
+
+            if (template && template !== DEFAULT_INSTRUCTIONS) {
+                indicator.classList.add('active');
+            } else {
+                indicator.classList.remove('active');
+            }
+        }
+
+        // Listen for changes in instruction template
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('instructionTemplate').addEventListener('input', updateCustomIndicator);
+        });
 
         // Copy JSON to clipboard
         function copyJSON(elementId) {
@@ -636,6 +848,7 @@
             const query = document.getElementById('queryInput').value;
             const generative = document.getElementById('generativeToggle').checked;
             const model = document.getElementById('modelSelect').value;
+            const instructionTemplate = document.getElementById('instructionTemplate').value.trim();
 
             if (!query.trim()) {
                 showStatus('Please enter a query', 'error');
@@ -647,18 +860,31 @@
             console.log('Model:', model);
             console.log('Generative:', generative);
 
+            // Check if using custom instructions
+            const usingCustom = instructionTemplate && instructionTemplate !== DEFAULT_INSTRUCTIONS;
+            if (usingCustom) {
+                console.log('Using custom instructions:', instructionTemplate);
+            }
+
             setLoading(true);
             document.getElementById('resultsContainer').style.display = 'none';
 
             try {
+                const requestBody = {
+                    query: query,
+                    model: model,
+                    generative: generative
+                };
+
+                // Add custom instructions if different from default
+                if (usingCustom) {
+                    requestBody.custom_instructions = instructionTemplate;
+                }
+
                 const response = await fetch('/api/query', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        query: query,
-                        model: model,
-                        generative: generative
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 const result = await response.json();
