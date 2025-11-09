@@ -148,9 +148,6 @@ Include `carousel.css` in addition to main stylesheet:
                     <p class="subtitle">Short Description</p>
                     <div class="course-info">
                         <p>Introduction paragraph...</p>
-                        <p style="margin-top: 24px; color: var(--text-secondary);">
-                            Use arrow keys or buttons below to navigate
-                        </p>
                     </div>
                 </div>
             </div>
@@ -689,9 +686,6 @@ def new_concept():
                         <p class="subtitle">Short Description</p>
                         <div class="course-info">
                             <p>Introduction to the concept...</p>
-                            <p style="margin-top: 24px; color: var(--text-secondary);">
-                                Use arrow keys or buttons below to navigate
-                            </p>
                         </div>
                     </div>
                 </div>
