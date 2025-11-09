@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Chunking Strategies - Semantic Search Course</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/carousel.css">
+    <style>
+        .title-slide {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .title-slide h1 {
+            font-size: 3em;
+            margin-bottom: 16px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .title-slide .course-info {
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.125em;
+            line-height: 1.8;
+        }
+
+        .document-box {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            border: 3px solid #6366f1;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            text-align: center;
+        }
+
+        .document-text {
+            font-size: 1.3em;
+            line-height: 1.8;
+            color: var(--text);
+            font-weight: 500;
+            margin: 16px 0;
+        }
+
+        .highlight-term {
+            background: #fef3c7;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            border-bottom: 2px solid #f59e0b;
+        }
+
+        .chunk-display {
+            margin: 24px 0;
+        }
+
+        .chunk-box {
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+            transition: all 0.3s;
+        }
+
+        .chunk-box:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .chunk-label {
+            font-size: 0.85em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .chunk-content {
+            font-size: 1.05em;
+            line-height: 1.7;
+            color: var(--text);
+        }
+
+        .chunk-note {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .query-test {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .query-question {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .result-success {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .result-fail {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .result-partial {
+            background: #fef3c7;
+            color: #f59e0b;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .strategy-card {
+            padding: 16px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            background: var(--surface);
+        }
+
+        .strategy-card.best {
+            border-color: #059669;
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        }
+
+        .strategy-card.good {
+            border-color: #2563eb;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+
+        .strategy-card.poor {
+            border-color: #dc2626;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        }
+
+        .strategy-name {
+            font-weight: 700;
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+
+        .strategy-result {
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .problem-box {
+            background: #fee2e2;
+            border: 2px solid #dc2626;
+            border-left: 6px solid #dc2626;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .problem-box h4 {
+            color: #dc2626;
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .solution-box {
+            background: #d1fae5;
+            border: 2px solid #059669;
+            border-left: 6px solid #059669;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .solution-box h4 {
+            color: #059669;
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .visual-diagram {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+            line-height: 1.8;
+        }
+
+        .reference-indicator {
+            background: #fef3c7;
+            border: 2px dashed #f59e0b;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .context-arrow {
+            color: #059669;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            font-size: 0.95em;
+        }
+
+        .summary-table th {
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .summary-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        .summary-table tr:hover {
+            background: var(--bg);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .badge-excellent {
+            background: #059669;
+            color: white;
+        }
+
+        .badge-good {
+            background: #2563eb;
+            color: white;
+        }
+
+        .badge-poor {
+            background: #dc2626;
+            color: white;
+        }
+
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .strategy-badge {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .strategy-badge:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .strategy-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        .strategy-name {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9em;
+        }
+
+        .formula-box {
+            background: var(--bg);
+            border-left: 4px solid var(--primary);
+            padding: 16px;
+            margin: 16px 0;
+            font-family: monospace;
+            font-size: 0.95em;
+            border-radius: 4px;
+        }
+
+        .example-box {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .example-box h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="home-link">← Back to Home</a>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="carousel-container">
+            <div class="carousel-wrapper" id="carouselWrapper">
+
+                <!-- Slide 1: Title -->
+                <div class="slide">
+                    <div class="slide-content title-slide">
+                        <h1>✂️ Text Chunking Strategies</h1>
+                        <p class="subtitle">Breaking Text into Meaningful Pieces</p>
+                        <div class="course-info">
+                            <p>
+                                Before we can search through text, we need to break it into manageable chunks.
+                                But how you chunk your text dramatically affects search quality. Choose the wrong
+                                strategy, and you'll lose critical context or fail to answer questions accurately.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: What is Chunking? -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>What is Text Chunking?</h2>
+                            <p class="slide-subtitle">The Foundation of Semantic Search</p>
+                        </div>
+
+                        <p>
+                            <strong>Text chunking</strong> is the process of dividing a large document into smaller,
+                            meaningful pieces. Each chunk becomes a searchable unit in your vector database.
+                        </p>
+
+                        <div class="example-box" style="margin-top: 24px;">
+                            <h3>Why Can't We Just Store Entire Documents?</h3>
+                            <p style="line-height: 1.8;">
+                                <strong>1. Context Window Limits:</strong> LLMs have token limits (e.g., 4K, 8K tokens)<br>
+                                <strong>2. Precision:</strong> Large documents contain many topics, making retrieval less accurate<br>
+                                <strong>3. Efficiency:</strong> Smaller chunks = faster search and lower costs<br>
+                                <strong>4. Relevance:</strong> You want the specific paragraph that answers a question, not a 50-page document
+                            </p>
+                        </div>
+
+                        <div class="formula-box" style="margin-top: 24px;">
+                            <strong>The Chunking Trade-off:</strong><br>
+                            • <strong>Too small:</strong> Lose context (e.g., character-level chunks)<br>
+                            • <strong>Too large:</strong> Noisy results, multiple topics mixed<br>
+                            • <strong>Just right:</strong> Preserves semantic coherence, focused retrieval
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: The Example Document -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>📄 The Example Document</h2>
+                            <p class="slide-subtitle">Two Sentences, Big Lesson</p>
+                        </div>
+
+                        <div class="document-box">
+                            <h3 style="margin-top: 0; color: #6366f1;">Our Test Document</h3>
+                            <div class="document-text">
+                                <span class="highlight-term">Puducherry</span> is a union territory of India.
+                                <span class="reference-indicator">The city</span> has a distinctive French colonial heritage.
+                            </div>
+                        </div>
+
+                        <div class="problem-box">
+                            <h4>⚠️ The Challenge</h4>
+                            <p style="line-height: 1.7; margin: 0;">
+                                Notice how "<strong>The city</strong>" in the second sentence refers back to
+                                "<strong>Puducherry</strong>" in the first sentence. This is a <strong>contextual reference</strong>
+                                that can be lost when we split the document into chunks!
+                            </p>
+                        </div>
+
+                        <div style="background: var(--bg); padding: 16px; border-radius: 8px; margin-top: 20px;">
+                            <h4 style="margin-top: 0;">Test Queries We'll Use:</h4>
+                            <ul style="line-height: 2; margin: 0;">
+                                <li>❓ "What is Puducherry?"</li>
+                                <li>❓ "Tell me about the city's heritage"</li>
+                                <li>❓ "French colonial influence in Puducherry"</li>
+                                <li>❓ "Union territories with French heritage"</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Fixed-Size Chunking -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>📏 Strategy 1: Fixed-Size Chunking</h2>
+                            <p class="slide-subtitle">Split by Character Count</p>
+                        </div>
+
+                        <div class="example-box" style="background: var(--bg);">
+                            <h4 style="margin-top: 0;">How it works: Split every 30 characters</h4>
+                            <div class="chunk-display">
+                                <div class="chunk-box" style="background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;">
+                                    <div class="chunk-label" style="color: #ef4444;">CHUNK 1 (0-30 chars)</div>
+                                    <div class="chunk-content">"Puducherry is a union terri..."</div>
+                                    <div class="chunk-note">❌ Cuts "territory" in half! Word is incomplete</div>
+                                </div>
+
+                                <div class="chunk-box" style="background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;">
+                                    <div class="chunk-label" style="color: #ef4444;">CHUNK 2 (30-60 chars)</div>
+                                    <div class="chunk-content">"...tory of India. The city has..."</div>
+                                    <div class="chunk-note">❌ Starts mid-word "tory", loses context of what "The city" means</div>
+                                </div>
+
+                                <div class="chunk-box" style="background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444;">
+                                    <div class="chunk-label" style="color: #ef4444;">CHUNK 3 (60-90 chars)</div>
+                                    <div class="chunk-content">"...a distinctive French colonial heritage."</div>
+                                    <div class="chunk-note">❌ Missing subject - heritage of what?</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "What is Puducherry?"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-fail">❌ FAILS BADLY</span><br>
+                                <strong>Why:</strong> Chunk 1 has "union terri" - an incomplete, meaningless word!<br>
+                                <strong>Problem:</strong> The embedding will struggle with broken words like "terri"
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "French colonial influence in Puducherry"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-fail">❌ TOTAL FAILURE</span><br>
+                                <strong>Why:</strong> Chunk 3 has "French colonial" but no subject context at all<br>
+                                <strong>Problem:</strong> Chunk 2 starts with "tory" (gibberish), Chunk 3 has "heritage" but of what?
+                            </div>
+                        </div>
+
+                        <div class="problem-box" style="margin-top: 20px;">
+                            <h4>❌ Critical Flaws (Multiple Issues)</h4>
+                            <p style="margin: 0; line-height: 1.7;">
+                                <strong>1. Word-Level Destruction:</strong> Splits words in half ("terri...tory"), creating garbage tokens<br>
+                                <strong>2. Sentence-Level Loss:</strong> Breaks sentences mid-thought<br>
+                                <strong>3. Context Loss:</strong> "The city" in Chunk 2 and "heritage" in Chunk 3 lose all connection to "Puducherry"<br>
+                                <strong>4. Unusable Embeddings:</strong> Models can't create meaningful vectors from "...tory of India. The city has..."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Sentence-Based Chunking -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>📝 Strategy 2: Sentence-Based Chunking</h2>
+                            <p class="slide-subtitle">Respect Sentence Boundaries</p>
+                        </div>
+
+                        <div class="example-box" style="background: var(--bg);">
+                            <h4 style="margin-top: 0;">How it works: One sentence per chunk</h4>
+                            <div class="chunk-display">
+                                <div class="chunk-box" style="background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;">
+                                    <div class="chunk-label" style="color: #10b981;">CHUNK 1 (Sentence 1)</div>
+                                    <div class="chunk-content">"Puducherry is a union territory of India."</div>
+                                    <div class="chunk-note">✅ Complete sentence, clear subject</div>
+                                </div>
+
+                                <div class="chunk-box" style="background: rgba(16, 185, 129, 0.1); border-left-color: #10b981;">
+                                    <div class="chunk-label" style="color: #10b981;">CHUNK 2 (Sentence 2)</div>
+                                    <div class="chunk-content">"The city has a distinctive French colonial heritage."</div>
+                                    <div class="chunk-note">⚠️ Complete sentence, but "The city" reference is vague</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "What is Puducherry?"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-success">✅ WORKS</span><br>
+                                <strong>Why:</strong> Chunk 1 perfectly matches and provides the answer<br>
+                                <strong>Similarity:</strong> High (direct name match)
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "French colonial influence in Puducherry"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-fail">❌ FAILS</span><br>
+                                <strong>Why:</strong> Chunk 2 has "French colonial" but embedding doesn't connect it to Puducherry<br>
+                                <strong>Problem:</strong> "The city" becomes generic when embedded independently
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "Union territories with French heritage"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-fail">❌ FAILS</span><br>
+                                <strong>Why:</strong> "Union territory" in Chunk 1, "French heritage" in Chunk 2 - disconnected!<br>
+                                <strong>Problem:</strong> Cross-chunk query requires both pieces of information
+                            </div>
+                        </div>
+
+                        <div class="solution-box" style="margin-top: 20px;">
+                            <h4>✅ Improvement</h4>
+                            <p style="margin: 0; line-height: 1.7;">
+                                Better than fixed-size! At least sentences are complete. But still suffers from
+                                <strong>context loss</strong> - pronouns and references lose their meaning.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Sliding Window Chunking -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>🪟 Strategy 3: Sliding Window Chunking</h2>
+                            <p class="slide-subtitle">Overlapping Chunks for Context</p>
+                        </div>
+
+                        <div class="example-box" style="background: var(--bg);">
+                            <h4 style="margin-top: 0;">How it works: Sentence 1 + half of Sentence 2, with overlap</h4>
+                            <p style="margin: 8px 0 16px 0; font-size: 0.95em; color: var(--text-secondary);">
+                                <strong>Strategy:</strong> Take full first sentence, then add partial content from next sentence to create overlap
+                            </p>
+                            <div class="chunk-display">
+                                <div class="chunk-box" style="background: rgba(37, 99, 235, 0.1); border-left-color: #2563eb;">
+                                    <div class="chunk-label" style="color: #2563eb;">CHUNK 1</div>
+                                    <div class="chunk-content">
+                                        "Puducherry is a union territory of India.
+                                        <span style="background: #fef3c7; padding: 2px 4px; border-radius: 3px;">The city has a distinctive French...</span>"
+                                    </div>
+                                    <div class="chunk-note">✅ Full sentence 1 + half of sentence 2 (overlapping region)</div>
+                                </div>
+
+                                <div style="text-align: center; color: var(--text-secondary); margin: 8px 0; font-size: 0.9em;">
+                                    ⬇️ Overlap: "The city has a distinctive French" appears in both chunks
+                                </div>
+
+                                <div class="chunk-box" style="background: rgba(37, 99, 235, 0.15); border-left-color: #2563eb;">
+                                    <div class="chunk-label" style="color: #2563eb;">CHUNK 2</div>
+                                    <div class="chunk-content">
+                                        "<span style="background: #fef3c7; padding: 2px 4px; border-radius: 3px;">The city has a distinctive French</span> colonial heritage."
+                                    </div>
+                                    <div class="chunk-note">⚠️ Starts with overlapping text, completes sentence 2</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "French colonial influence in Puducherry"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Chunk 1:</strong> <span class="result-indicator result-partial">⚠️ PARTIAL</span> - Has "Puducherry" + "distinctive French" but sentence incomplete<br>
+                                <strong>Chunk 2:</strong> <span class="result-indicator result-fail">❌ FAILS</span> - Has "French colonial heritage" but missing "Puducherry" reference!<br>
+                                <strong>Problem:</strong> Chunk 2 is embedded independently, so "The city" loses connection to "Puducherry"
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "What is Puducherry?"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-success">✅ WORKS</span><br>
+                                <strong>Why:</strong> Chunk 1 has "Puducherry is a union territory of India"<br>
+                                <strong>Note:</strong> But answer still incomplete - French heritage info is split across chunks
+                            </div>
+                        </div>
+
+                        <div class="visual-diagram">
+                            <strong>⚠️ The Fundamental Problem:</strong><br><br>
+                            Traditional Embedding Process:<br>
+                            1. Split document → Chunk 1, Chunk 2<br>
+                            2. Embed each chunk INDEPENDENTLY<br>
+                            3. "The city" → Generic city embedding [0.3, 0.4, 0.2, ...]<br><br>
+
+                            <span style="color: #dc2626;">Problem: Pronoun resolution happens AFTER chunking!</span>
+                        </div>
+
+                        <div class="problem-box" style="margin-top: 20px;">
+                            <h4>❌ Still Loses Context</h4>
+                            <p style="margin: 0; line-height: 1.7;">
+                                Sliding window helps by keeping text together, but <strong>embeddings are still generated
+                                per chunk</strong>. The model doesn't "see" that "The city" refers to Puducherry when creating
+                                the embedding for Chunk 1.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Semantic Chunking -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>🧠 Strategy 4: Semantic Chunking</h2>
+                            <p class="slide-subtitle">AI-Detected Topic Boundaries</p>
+                        </div>
+
+                        <div class="example-box" style="background: var(--bg);">
+                            <h4 style="margin-top: 0;">How it works: Group sentences by topic similarity</h4>
+                            <div class="chunk-display">
+                                <div class="chunk-box" style="background: rgba(139, 92, 246, 0.1); border-left-color: #8b5cf6;">
+                                    <div class="chunk-label" style="color: #8b5cf6;">CHUNK 1 (Topic: Puducherry Overview)</div>
+                                    <div class="chunk-content">
+                                        "Puducherry is a union territory of India. The city has a distinctive French colonial heritage."
+                                    </div>
+                                    <div class="chunk-note">✅ AI detects both sentences are about same topic → keeps together</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "What is Puducherry?"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-success">✅ EXCELLENT</span><br>
+                                <strong>Why:</strong> Complete information in one coherent chunk<br>
+                                <strong>Benefit:</strong> Comprehensive answer with all related details
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "French colonial influence in Puducherry"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-fail">❌ STILL FAILS</span><br>
+                                <strong>Why:</strong> Same problem! Embedding happens AFTER chunking<br>
+                                <strong>Problem:</strong> "The city" in the embedding is still generic
+                            </div>
+                        </div>
+
+                        <div class="visual-diagram">
+                            <strong>Semantic Chunking Process:</strong><br><br>
+                            1. Embed each sentence: [S1_embedding, S2_embedding]<br>
+                            2. Calculate similarity: cosine(S1, S2) = 0.78 (high!)<br>
+                            3. Decision: Similar topics → Keep together<br>
+                            4. Create Chunk: "S1 + S2"<br>
+                            5. Embed the chunk: <span style="color: #dc2626;">← Still treats "The city" as generic!</span>
+                        </div>
+
+                        <div class="solution-box" style="margin-top: 20px;">
+                            <h4>✅ Best Traditional Approach</h4>
+                            <p style="margin: 0; line-height: 1.7;">
+                                Semantic chunking creates the most <strong>coherent, topic-focused chunks</strong>.
+                                Better than all previous methods! But still can't solve the <strong>pronoun reference problem</strong>
+                                because embeddings happen after chunking.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Late Chunking -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>🎯 Strategy 5: Late Chunking (Jina AI)</h2>
+                            <p class="slide-subtitle">Embed First, Then Chunk</p>
+                        </div>
+
+                        <div class="solution-box">
+                            <h4>💡 The Breakthrough Idea</h4>
+                            <p style="margin: 0; line-height: 1.7;">
+                                What if we <strong>embed the ENTIRE document first</strong>, then chunk the token vectors?
+                                This way, "The city" gets contextualized with "Puducherry" during embedding!
+                            </p>
+                        </div>
+
+                        <div class="visual-diagram">
+                            <strong>Late Chunking Process:</strong><br><br>
+                            <span style="color: #2563eb;">Step 1: Embed entire document (all tokens see each other)</span><br>
+                            Token[0] "Puducherry" → [0.82, 0.21, -0.31, 0.54]<br>
+                            Token[1] "is" → [0.11, 0.42, 0.23, -0.12]<br>
+                            Token[2] "a" → [0.32, 0.53, 0.14, 0.24]<br>
+                            ...<br>
+                            Token[9] "The" → [0.78, 0.24, -0.28, 0.51]<br>
+                            Token[10] "city" → <strong style="color: #059669;">[0.79, 0.23, -0.29, 0.52]</strong> ← Similar to "Puducherry"!<br>
+                            Token[11] "has" → [0.22, 0.31, 0.12, 0.13]<br>
+                            ...<br><br>
+
+                            <span style="color: #059669;">Step 2: Pool tokens per chunk (mean pooling)</span><br>
+                            Chunk 1 = average(Token[0:8]) → captures "Puducherry" + "union territory"<br>
+                            Chunk 2 = average(Token[9:end]) → captures <strong>"city as Puducherry"</strong> + "French heritage"
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "French colonial influence in Puducherry"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-success">✅ WORKS!</span><br>
+                                <strong>Why:</strong> Chunk 2's "city" token was contextualized with "Puducherry"<br>
+                                <strong>Similarity:</strong> Query "Puducherry + French" matches Chunk 2 strongly (0.87)
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "Union territories with French heritage"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-success">✅ WORKS!</span><br>
+                                <strong>Why:</strong> Both chunks know about Puducherry's dual nature<br>
+                                <strong>Benefit:</strong> Cross-chunk queries now succeed
+                            </div>
+                        </div>
+
+                        <div class="example-box" style="background: #d1fae5; border-color: #059669;">
+                            <h4 style="margin-top: 0; color: #059669;">✅ How Late Chunking Solves It</h4>
+                            <table style="width: 100%; margin-top: 12px;">
+                                <tr>
+                                    <td style="width: 50%; padding-right: 12px; vertical-align: top;">
+                                        <strong>Traditional (Naive) Chunking:</strong><br>
+                                        "The city" → Generic city vector<br>
+                                        cosine(query_"Puducherry French", chunk2) = <span style="color: #dc2626;">0.42</span>
+                                    </td>
+                                    <td style="width: 50%; padding-left: 12px; vertical-align: top; border-left: 2px solid #059669;">
+                                        <strong>Late Chunking:</strong><br>
+                                        "The city" → Puducherry-specific vector<br>
+                                        cosine(query_"Puducherry French", chunk2) = <span style="color: #059669;">0.87</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="problem-box" style="background: #fef3c7; border-color: #f59e0b;">
+                            <h4 style="color: #f59e0b;">⚠️ What About Large Documents?</h4>
+                            <p style="line-height: 1.7; margin-bottom: 12px;">
+                                <strong>The Challenge:</strong> "All tokens see each other" means the transformer processes the entire document in one pass.
+                            </p>
+                            <p style="line-height: 1.7; margin-bottom: 12px;">
+                                <strong>Example:</strong> A 10,000-word document = ~13,000 tokens<br>
+                                • Transformer attention: O(n²) complexity = 13,000² = 169 million operations!<br>
+                                • Memory usage: Attention matrix = 13,000 × 13,000 × 4 bytes = ~650 MB per document<br>
+                                • Time: 5-10 seconds per document (vs. 0.1s for chunking first)
+                            </p>
+                            <p style="line-height: 1.7; margin: 0;">
+                                <strong>Practical Limits:</strong><br>
+                                • Most models: 8K-32K token context window maximum<br>
+                                • Jina embeddings-v3: Up to 8192 tokens (≈6000 words)<br>
+                                • For longer documents: Must split into multiple "late chunking" passes or use hierarchical approach
+                            </p>
+                        </div>
+
+                        <div style="background: var(--bg); padding: 16px; border-radius: 8px; border: 2px solid #2563eb; margin-top: 16px;">
+                            <h4 style="margin-top: 0; color: #2563eb;">💡 What "All Tokens See Each Other" Means</h4>
+                            <p style="line-height: 1.7; margin: 0;">
+                                In transformer self-attention, <strong>every token attends to every other token</strong>:<br><br>
+                                • Token "city" at position 10 can look at Token "Puducherry" at position 0<br>
+                                • The attention mechanism learns: "When I see 'The city', check if there's a proper noun earlier"<br>
+                                • Result: Token embeddings become <strong>contextual</strong> - "city" vector is influenced by "Puducherry"<br><br>
+                                This is why transformers are powerful but computationally expensive for long sequences!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 9: Contextual Embeddings -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>🌐 Strategy 6: Contextual Embeddings (Voyage AI)</h2>
+                            <p class="slide-subtitle">Train Model to Inject Global Context</p>
+                        </div>
+
+                        <div class="solution-box">
+                            <h4>💡 The Ultimate Approach</h4>
+                            <p style="margin: 0; line-height: 1.7;">
+                                Train a specialized model that <strong>automatically injects document-level context</strong>
+                                into each chunk's embedding. Get both <strong>fine-grained detail AND global context</strong>!
+                            </p>
+                        </div>
+
+                        <div class="visual-diagram">
+                            <strong>Voyage Context-3 Process:</strong><br><br>
+                            <span style="color: #2563eb;">Input: Entire document + chunk boundaries</span><br>
+                            Document: "Puducherry is a union territory of India. The city has..."<br>
+                            Chunks: [Sentence 1, Sentence 2]<br><br>
+
+                            <span style="color: #6366f1;">Model's Internal Attention (trained to inject context):</span><br>
+                            Processing Chunk 2: "The city has a distinctive French colonial heritage"<br>
+                            → Attention looks at Chunk 1: "Puducherry is a union territory"<br>
+                            → Decision: <strong>"Inject Puducherry + India + union territory into Chunk 2's embedding"</strong><br><br>
+
+                            <span style="color: #059669;">Output Embeddings:</span><br>
+                            Chunk 1: [0.65, 0.75, 0.30, ...] ← Puducherry + union territory + India<br>
+                            Chunk 2: [0.63, 0.72, 0.45, ...] ← French heritage + <strong>Puducherry (injected!)</strong> + India (injected!)
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "French colonial influence in Puducherry"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-success">✅ EXCELLENT (0.91)</span><br>
+                                <strong>Why:</strong> Chunk 2 embedding contains both "French colonial" AND "Puducherry" context<br>
+                                <strong>Improvement:</strong> +50% better similarity score than naive chunking
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "The city mentioned in the document"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-success">✅ EXCELLENT (0.88)</span><br>
+                                <strong>Why:</strong> "The city" in Chunk 2 specifically means Puducherry<br>
+                                <strong>Benefit:</strong> Handles vague/pronoun-heavy queries perfectly
+                            </div>
+                        </div>
+
+                        <div class="query-test">
+                            <div class="query-question">❓ Query: "Union territories with unique heritage"</div>
+                            <div style="line-height: 1.8;">
+                                <strong>Result:</strong> <span class="result-indicator result-success">✅ EXCELLENT (0.89)</span><br>
+                                <strong>Why:</strong> Both chunks have global context (union territory + heritage)<br>
+                                <strong>Benefit:</strong> Cross-concept queries work flawlessly
+                            </div>
+                        </div>
+
+                        <div class="visual-diagram" style="background: #e0e7ff; border-color: #6366f1;">
+                            <h4 style="margin-top: 0; color: #6366f1;">🔬 How Context Injection Actually Works</h4>
+                            <p style="line-height: 1.7; margin-bottom: 12px;">
+                                <strong>Step 1: Document-Level Context Extraction (Automatic)</strong><br>
+                                The model is trained to extract key information from the full document:
+                            </p>
+                            <div style="background: var(--surface); padding: 12px; border-radius: 6px; margin: 12px 0;">
+                                Input: Full document<br>
+                                → Encoder creates document representation: [doc_embedding]<br>
+                                → Global context pool: Identifies entities (Puducherry, India), attributes (union territory, French colonial)<br>
+                                → Context summary vector: [0.71, 0.68, 0.35, ...] captures "Puducherry India union-territory French-heritage"
+                            </div>
+
+                            <p style="line-height: 1.7; margin-bottom: 12px;">
+                                <strong>Step 2: Chunk Processing with Context Fusion</strong><br>
+                                For each chunk, the model combines chunk content + document context:
+                            </p>
+                            <div style="background: var(--surface); padding: 12px; border-radius: 6px; margin: 12px 0;">
+                                Processing Chunk 2: "The city has a distinctive French colonial heritage"<br><br>
+
+                                <span style="color: #2563eb;">A. Chunk-only embedding</span> (what naive chunking would produce):<br>
+                                [0.31, 0.42, 0.68, ...] ← "city" + "distinctive" + "French" + "colonial" + "heritage"<br><br>
+
+                                <span style="color: #6366f1;">B. Document context injection</span> (via cross-attention):<br>
+                                Attention(Chunk2, DocumentContext) → selects relevant context<br>
+                                → Finds "Puducherry" and "India" are relevant entities<br>
+                                → Context contribution: [0.42, 0.38, 0.12, ...] ← "Puducherry" + "India" signal<br><br>
+
+                                <span style="color: #059669;">C. Fused embedding</span> (final output):<br>
+                                Chunk2_embedding = 0.7 × ChunkOnly + 0.3 × ContextInjection<br>
+                                = [0.63, 0.72, 0.45, ...] ← Has BOTH specific details AND global context!
+                            </div>
+
+                            <p style="line-height: 1.7; margin: 0;">
+                                <strong>Key Point:</strong> The model <strong>learns the fusion weights</strong> during training. It knows to inject more context for
+                                pronouns ("The city" gets high context weight) and less for explicit terms ("Puducherry" needs low context weight).
+                            </p>
+                        </div>
+
+                        <div class="problem-box" style="background: #fef3c7; border-color: #f59e0b; margin-top: 16px;">
+                            <h4 style="color: #f59e0b;">⚠️ What About Large Documents?</h4>
+                            <p style="line-height: 1.7; margin-bottom: 12px;">
+                                <strong>The Smart Solution:</strong> Contextual embeddings use <strong>hierarchical attention</strong> and <strong>efficient approximations</strong>:
+                            </p>
+                            <p style="line-height: 1.7; margin-bottom: 12px;">
+                                <strong>For large documents (e.g., 50,000 words):</strong><br>
+                                • <strong>Document Encoder:</strong> Uses sparse attention (not every token sees every token)<br>
+                                • <strong>Global Context Pool:</strong> Compressed representation (~512 dimensions regardless of doc size)<br>
+                                • <strong>Chunk Encoder:</strong> Only processes chunk tokens (~100-500 tokens) + global context pool<br>
+                                • <strong>Result:</strong> O(n) complexity instead of O(n²) for full attention
+                            </p>
+                            <p style="line-height: 1.7; margin: 0;">
+                                <strong>Practical Limits:</strong><br>
+                                • Voyage Context-3: Handles documents up to 120K tokens (≈90,000 words)<br>
+                                • Processing time: ~1-2 seconds for 50K word document (vs. 0.1s without context)<br>
+                                • Memory: ~2GB GPU memory for batch of 32 chunks (vs. 1GB without context)<br>
+                                • Efficiency gain: 10x faster than late chunking for same document size!
+                            </p>
+                        </div>
+
+                        <div style="background: var(--bg); padding: 16px; border-radius: 8px; border: 2px solid #2563eb; margin-top: 16px;">
+                            <h4 style="margin-top: 0; color: #2563eb;">💡 How Document-Level Context is Derived</h4>
+                            <p style="line-height: 1.7; margin-bottom: 12px;">
+                                The model is trained with <strong>contrastive learning</strong> using three types of training examples:
+                            </p>
+                            <div style="background: var(--surface); padding: 12px; border-radius: 6px; margin: 12px 0; font-size: 0.95em;">
+                                <strong>1. Chunk-Level Positive:</strong><br>
+                                Query: "French colonial heritage"<br>
+                                Positive: Chunk 2 (should match high!)<br>
+                                → Teaches model to encode chunk details accurately<br><br>
+
+                                <strong>2. Document-Level Positive:</strong><br>
+                                Query: "Puducherry overview"<br>
+                                Positive: ALL chunks from Puducherry document (should match!)<br>
+                                → Teaches model to inject "Puducherry" context into every chunk<br><br>
+
+                                <strong>3. Cross-Document Negative:</strong><br>
+                                Query: "French colonial heritage"<br>
+                                Negative: Chunks about "Paris colonial history" (should NOT match!)<br>
+                                → Teaches model to distinguish between similar terms in different contexts
+                            </div>
+                            <p style="line-height: 1.7; margin: 0;">
+                                Through millions of examples, the model learns: <strong>"When I see 'The city' in a chunk,
+                                I should check the document context pool and inject the actual city name into the embedding."</strong>
+                            </p>
+                        </div>
+
+                        <div class="example-box" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); border-color: #6366f1; margin-top: 16px;">
+                            <h4 style="margin-top: 0; color: #6366f1;">🏆 Why It's State-of-the-Art</h4>
+                            <ul style="line-height: 2; margin: 8px 0;">
+                                <li><strong>Dual Training:</strong> Optimized for chunk-level AND document-level relevance simultaneously</li>
+                                <li><strong>Automatic Context Extraction:</strong> No manual metadata or preprocessing needed</li>
+                                <li><strong>Efficient Architecture:</strong> O(n) scaling, handles documents 10x larger than late chunking</li>
+                                <li><strong>Learned Fusion:</strong> Model knows when to inject context (pronouns) vs. when to skip (explicit terms)</li>
+                                <li><strong>Drop-in:</strong> Works with any existing chunking strategy</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 10: Complete Query Comparison -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>📊 Complete Query Comparison</h2>
+                            <p class="slide-subtitle">How Each Strategy Performs</p>
+                        </div>
+
+                        <table class="summary-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 35%; border-radius: 8px 0 0 0;">Query</th>
+                                    <th style="width: 13%;">Fixed</th>
+                                    <th style="width: 13%;">Sentence</th>
+                                    <th style="width: 13%;">Sliding</th>
+                                    <th style="width: 13%;">Semantic</th>
+                                    <th style="width: 13%;">Late Chunk</th>
+                                    <th style="border-radius: 0 8px 0 0;">Contextual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>"What is Puducherry?"</strong></td>
+                                    <td><span class="badge badge-poor">0.62</span></td>
+                                    <td><span class="badge badge-good">0.84</span></td>
+                                    <td><span class="badge badge-good">0.88</span></td>
+                                    <td><span class="badge badge-excellent">0.92</span></td>
+                                    <td><span class="badge badge-excellent">0.93</span></td>
+                                    <td><span class="badge badge-excellent">0.95</span></td>
+                                </tr>
+                                <tr style="background: var(--bg);">
+                                    <td><strong>"French colonial in Puducherry"</strong></td>
+                                    <td><span class="badge badge-poor">0.41</span></td>
+                                    <td><span class="badge badge-poor">0.47</span></td>
+                                    <td><span class="badge badge-poor">0.52</span></td>
+                                    <td><span class="badge badge-poor">0.56</span></td>
+                                    <td><span class="badge badge-excellent">0.87</span></td>
+                                    <td><span class="badge badge-excellent">0.91</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>"The city's heritage"</strong></td>
+                                    <td><span class="badge badge-poor">0.38</span></td>
+                                    <td><span class="badge badge-poor">0.44</span></td>
+                                    <td><span class="badge badge-poor">0.49</span></td>
+                                    <td><span class="badge badge-poor">0.53</span></td>
+                                    <td><span class="badge badge-good">0.79</span></td>
+                                    <td><span class="badge badge-excellent">0.88</span></td>
+                                </tr>
+                                <tr style="background: var(--bg);">
+                                    <td><strong>"Union territories French"</strong></td>
+                                    <td><span class="badge badge-poor">0.35</span></td>
+                                    <td><span class="badge badge-poor">0.39</span></td>
+                                    <td><span class="badge badge-poor">0.46</span></td>
+                                    <td><span class="badge badge-poor">0.51</span></td>
+                                    <td><span class="badge badge-good">0.82</span></td>
+                                    <td><span class="badge badge-excellent">0.89</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="display: flex; gap: 16px; margin-top: 24px;">
+                            <div style="flex: 1; text-align: center;">
+                                <div style="font-size: 2.5em; color: #dc2626; font-weight: 700;">4/4</div>
+                                <div style="font-size: 0.9em; color: var(--text-secondary);">Traditional Methods<br><strong>FAIL</strong> context queries</div>
+                            </div>
+                            <div style="flex: 1; text-align: center;">
+                                <div style="font-size: 2.5em; color: #059669; font-weight: 700;">4/4</div>
+                                <div style="font-size: 0.9em; color: var(--text-secondary);">Advanced Techniques<br><strong>SUCCEED</strong> all queries</div>
+                            </div>
+                        </div>
+
+                        <div class="example-box" style="background: #fef3c7; border-color: #f59e0b; margin-top: 24px;">
+                            <h4 style="margin-top: 0;">⚡ Key Insight</h4>
+                            <p style="margin: 0; line-height: 1.7;">
+                                Traditional chunking (Fixed, Sentence, Sliding, Semantic) all fail on <strong>contextual/cross-chunk queries</strong>
+                                because they embed chunks independently. Late Chunking and Contextual Embeddings solve this by ensuring
+                                each chunk's embedding <strong>knows about the entire document</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 11: Overview of Strategies -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Six Chunking Strategies</h2>
+                            <p class="slide-subtitle">From Simple to State-of-the-Art</p>
+                        </div>
+
+                        <div class="strategy-grid">
+                            <div class="strategy-badge" style="border-color: #ef4444;">
+                                <div class="strategy-icon">📏</div>
+                                <div class="strategy-name">Fixed-Size</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #10b981;">
+                                <div class="strategy-icon">📝</div>
+                                <div class="strategy-name">Sentence-Based</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #2563eb;">
+                                <div class="strategy-icon">🪟</div>
+                                <div class="strategy-name">Sliding Window</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #8b5cf6;">
+                                <div class="strategy-icon">🧠</div>
+                                <div class="strategy-name">Semantic</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #f59e0b; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                                <div class="strategy-icon">🎯</div>
+                                <div class="strategy-name">Late Chunking</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #6366f1; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);">
+                                <div class="strategy-icon">🌐</div>
+                                <div class="strategy-name">Contextual Embeddings</div>
+                            </div>
+                        </div>
+
+                        <table class="summary-table" style="margin-top: 32px; width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                            <thead>
+                                <tr>
+                                    <th style="padding: 12px; background: var(--primary); color: white; text-align: left;">Strategy</th>
+                                    <th style="padding: 12px; background: var(--primary); color: white; text-align: left;">How It Works</th>
+                                    <th style="padding: 12px; background: var(--primary); color: white; text-align: left;">Best For</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Fixed-Size</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Split every N characters/tokens</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Simple use cases, consistent sizing</td>
+                                </tr>
+                                <tr style="background: var(--bg);">
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Sentence-Based</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Split at sentence boundaries</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Natural language, Q&A systems</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Sliding Window</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Overlapping chunks with stride</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Continuous narratives, preserving context</td>
+                                </tr>
+                                <tr style="background: var(--bg);">
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Semantic</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">AI-driven topic boundaries</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Complex documents, topic-based retrieval</td>
+                                </tr>
+                                <tr style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Late Chunking</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Embed full doc, then chunk tokens</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Cross-references, pronoun resolution</td>
+                                </tr>
+                                <tr style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);">
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);"><strong>Contextual Embeddings</strong></td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Model injects global context per chunk</td>
+                                    <td style="padding: 12px; border-bottom: 1px solid var(--border);">Best quality + efficiency, production systems</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p style="margin-top: 20px; padding: 12px; background: #e0e7ff; border-left: 4px solid #6366f1; border-radius: 6px;">
+                            <strong>💡 Note:</strong> Late Chunking and Contextual Embeddings are <strong>advanced techniques</strong>
+                            that solve the context loss problem. We'll explore them with the Puducherry example!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Slide 12: Key Takeaways -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>🎓 Key Takeaways</h2>
+                            <p class="slide-subtitle">Lessons from Puducherry</p>
+                        </div>
+
+                        <div class="comparison-grid">
+                            <div class="strategy-card poor">
+                                <div class="strategy-name" style="color: #dc2626;">❌ Traditional Chunking Problem</div>
+                                <div class="strategy-result">
+                                    Chunks are embedded <strong>independently</strong>, causing:<br>
+                                    • Pronouns lose references<br>
+                                    • Cross-chunk info disconnected<br>
+                                    • Poor contextual query performance
+                                </div>
+                            </div>
+
+                            <div class="strategy-card good">
+                                <div class="strategy-name" style="color: #2563eb;">🎯 Late Chunking Solution</div>
+                                <div class="strategy-result">
+                                    Embed <strong>entire document first</strong>, then pool tokens per chunk:<br>
+                                    • Preserves all references<br>
+                                    • +100% improvement on context queries<br>
+                                    • Requires long-context models
+                                </div>
+                            </div>
+
+                            <div class="strategy-card best">
+                                <div class="strategy-name" style="color: #059669;">🌐 Contextual Embeddings (Best)</div>
+                                <div class="strategy-result">
+                                    Model <strong>trained to inject context</strong>:<br>
+                                    • Best of both worlds (detail + context)<br>
+                                    • Drop-in replacement<br>
+                                    • 99% cost reduction vs. alternatives
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="example-box" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-color: var(--primary); margin-top: 32px;">
+                            <h3 style="margin-top: 0;">📖 The Puducherry Lesson</h3>
+                            <p style="line-height: 1.8; margin-bottom: 16px;">
+                                This simple two-sentence example reveals a <strong>fundamental limitation</strong> of traditional chunking:
+                                <strong>semantic references are lost when chunks are embedded independently</strong>.
+                            </p>
+                            <p style="line-height: 1.8; margin: 0;">
+                                For production systems with real documents (contracts, medical records, research papers),
+                                this problem is <strong>magnified 100x</strong>. Use Late Chunking or Contextual Embeddings
+                                to ensure your search system understands <strong>what "the city" really means</strong>.
+                            </p>
+                        </div>
+
+                        <ul style="font-size: 1.1em; line-height: 2.2; margin-top: 32px;">
+                            <li><strong>Context loss is real</strong> - Don't underestimate pronoun/reference problems</li>
+                            <li><strong>Embedding order matters</strong> - When you chunk affects what the model "sees"</li>
+                            <li><strong>Test with hard queries</strong> - Try cross-chunk and contextual questions</li>
+                            <li><strong>Advanced ≠ Expensive</strong> - Contextual embeddings actually reduce costs</li>
+                        </ul>
+
+                        <div style="text-align: center; margin-top: 48px;">
+                            <a href="index.html" style="text-decoration: none;">
+                                <button class="action-btn" style="padding: 16px 32px; font-size: 1.125em;">
+                                    ← Back to Home
+                                </button>
+                            </a>
+                            <a href="/demo/chunking" style="text-decoration: none; margin-left: 16px;">
+                                <button class="action-btn" style="padding: 16px 32px; font-size: 1.125em; background: var(--primary);">
+                                    🔬 Interactive Chunking Demo →
+                                </button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Navigation Controls -->
+        <div class="carousel-nav">
+            <button id="prevBtn" onclick="prevSlide()">← Previous</button>
+
+            <div class="nav-center">
+                <div class="slide-indicators" id="slideIndicators"></div>
+                <span class="slide-counter">
+                    <span id="currentSlide">1</span> / <span id="totalSlides">12</span>
+                </span>
+            </div>
+
+            <button id="nextBtn" onclick="nextSlide()">Next →</button>
+        </div>
+    </div>
+
+    <div class="keyboard-hint" id="keyboardHint">
+        Use <kbd>←</kbd> <kbd>→</kbd> arrow keys to navigate
+    </div>
+
+    <script>
+        // Carousel State
+        let currentSlide = 0;
+        const totalSlides = 12;
+        const carouselWrapper = document.getElementById('carouselWrapper');
+        const progressFill = document.getElementById('progressFill');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        function initCarousel() {
+            updateSlide();
+            createIndicators();
+            setTimeout(() => {
+                document.getElementById('keyboardHint').style.animation = 'fadeInOut 3s ease-in-out';
+            }, 1000);
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlide();
+        }
+
+        function updateSlide() {
+            const offset = -currentSlide * 100;
+            carouselWrapper.style.transform = `translateX(${offset}%)`;
+
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressFill.style.width = `${progress}%`;
+
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+
+            updateIndicators();
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('slideIndicators');
+            for (let i = 0; i < totalSlides; i++) {
+                const indicator = document.createElement('div');
+                indicator.className = 'slide-indicator';
+                indicator.onclick = () => goToSlide(i);
+                container.appendChild(indicator);
+            }
+            updateIndicators();
+        }
+
+        function updateIndicators() {
+            const indicators = document.querySelectorAll('.slide-indicator');
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // Initialize
+        initCarousel();
+    </script>
+</body>
+</html>

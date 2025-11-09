@@ -532,8 +532,50 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Discussions**: [GitHub Discussions](https://github.com/your-username/llm-semantic-search/discussions)
 - **Email**: your.email@example.com
 
+## 🌐 Hosting on GitHub Pages
+
+**Want to view the learning slides online without installing anything?**
+
+This project includes a static version that can be hosted on GitHub Pages!
+
+### What Works as Static Pages?
+
+✅ **All Learning Modules** (slide presentations work perfectly):
+- Knowledge Encoding
+- Understanding LLMs
+- Text Chunking Strategies
+- Vector Databases
+- Semantic Search & RAG
+
+❌ **Interactive Demos** (require local Flask/Ollama/Typesense setup)
+
+### Quick Setup
+
+1. **Convert templates to static HTML**:
+   ```bash
+   python3 convert_to_static.py
+   ```
+
+2. **Push to GitHub**:
+   ```bash
+   git add docs/
+   git commit -m "Add static site for GitHub Pages"
+   git push origin main
+   ```
+
+3. **Enable GitHub Pages**:
+   - Go to **Settings → Pages**
+   - Source: **Deploy from a branch**
+   - Branch: `main`, Folder: `/docs`
+   - Save
+
+4. **Visit your site**: `https://YOUR-USERNAME.github.io/llm-semantic-search/`
+
+**Full instructions**: See [GITHUB_PAGES_SETUP.md](GITHUB_PAGES_SETUP.md)
+
 ## 🗺️ Roadmap
 
+- [x] GitHub Pages static hosting
 - [ ] Add more LLM model support (GPT, Claude, etc.)
 - [ ] Implement RAG (Retrieval Augmented Generation) demo
 - [ ] Add multi-modal search (text + images)

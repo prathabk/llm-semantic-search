@@ -1,0 +1,130 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #2563eb;
+    --primary-dark: #1e40af;
+    --text: #0f172a;
+    --text-secondary: #64748b;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --shadow: rgba(15, 23, 42, 0.08);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    padding: 20px;
+    color: var(--text);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 48px;
+    box-shadow: 0 1px 3px var(--shadow);
+    border: 1px solid var(--border);
+}
+
+header {
+    text-align: center;
+    margin-bottom: 56px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+}
+
+h1 {
+    color: var(--text);
+    font-size: 2.5em;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.125em;
+    font-weight: 400;
+}
+
+.nav-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+}
+
+.nav-card {
+    background: var(--surface);
+    color: var(--text);
+    padding: 32px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.nav-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px var(--shadow);
+    border-color: var(--primary);
+}
+
+.nav-card h2 {
+    margin-bottom: 12px;
+    font-size: 1.375em;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.nav-card p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 0.9375em;
+}
+
+.home-link {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 24px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9375em;
+    transition: color 0.2s;
+}
+
+.home-link:hover {
+    color: var(--primary);
+}
+
+.content {
+    line-height: 1.75;
+    color: var(--text);
+}
+
+.content h2 {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 1.875em;
+    margin-top: 48px;
+    margin-bottom: 16px;
+    letter-spacing: -0.025em;
+}
+
+.content h3 {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 1.375em;
+    margin-top: 32px;
+    margin-bottom: 12px;
+}

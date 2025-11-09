@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Encoding - Semantic Search Course</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/carousel.css">
+    <style>
+        canvas {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            display: block;
+            margin: 20px auto;
+            box-shadow: 0 1px 3px var(--shadow);
+        }
+
+        .interactive-section {
+            background: var(--bg);
+            padding: 32px;
+            border-radius: 8px;
+            margin: 24px 0;
+            border: 1px solid var(--border);
+        }
+
+        .controls {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: 500;
+            font-size: 0.875em;
+            color: var(--text);
+        }
+
+        .control-group input[type="range"] {
+            width: 140px;
+        }
+
+        .control-group span {
+            font-size: 0.875em;
+            color: var(--text-secondary);
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+        }
+
+        .example-box {
+            background: var(--bg);
+            padding: 24px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+        }
+
+        .example-box h3, .example-box h4 {
+            margin-top: 0;
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .vector-math {
+            background: var(--surface);
+            padding: 16px;
+            border-left: 3px solid var(--primary);
+            margin: 16px 0;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.9375em;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px var(--shadow);
+        }
+
+        button.action-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9375em;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        button.action-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .title-slide {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .title-slide h1 {
+            font-size: 3em;
+            margin-bottom: 16px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .title-slide .course-info {
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 1.125em;
+            line-height: 1.8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table th, table td {
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            text-align: left;
+        }
+
+        table th {
+            background: var(--text);
+            color: white;
+            font-weight: 600;
+            font-size: 0.9375em;
+        }
+
+        table tr:nth-child(even) {
+            background: var(--bg);
+        }
+
+        .content ul {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        .content ul li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .content p {
+            margin: 12px 0;
+        }
+
+        .evolution-diagram {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 32px 0;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .evolution-step {
+            text-align: center;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            min-width: 200px;
+            flex: 1;
+        }
+
+        .evolution-step.active {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .evolution-step strong {
+            display: block;
+            margin-bottom: 12px;
+            color: var(--text);
+            font-size: 1.125em;
+        }
+
+        .evolution-arrow {
+            font-size: 2em;
+            color: var(--text-secondary);
+        }
+
+        .word-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .word-item {
+            padding: 8px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .word-item:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .word-item.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pipeline-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 24px 0;
+        }
+
+        .pipeline-step {
+            padding: 16px 24px;
+            background: #eff6ff;
+            border-radius: 8px;
+            border: 2px solid var(--primary);
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .pipeline-arrow {
+            font-size: 1.5em;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .step-indicator {
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .context-example {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+        }
+
+        .context-example.highlighted {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="home-link">← Back to Home</a>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="carousel-container">
+            <div class="carousel-wrapper" id="carouselWrapper">
+
+                <!-- Slide 1: Title -->
+                <div class="slide">
+                    <div class="slide-content title-slide">
+                        <h1>🧬 Knowledge Encoding</h1>
+                        <p class="subtitle">Vectors & Embeddings: How Machines Understand Meaning</p>
+                        <div class="course-info">
+                            <p>Discover how modern AI represents knowledge — not as rules or symbols, but as geometric patterns in high-dimensional space.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Vector Basics - Magnitude and Direction -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>What is a Vector?</h2>
+                            <p class="slide-subtitle">Magnitude and Direction</p>
+                        </div>
+
+                        <p>A <span class="highlight">vector</span> has two key properties: <strong>magnitude</strong> (how long) and <strong>direction</strong> (which way it points).</p>
+
+                        <div class="interactive-section">
+                            <p style="text-align: center; margin-bottom: 10px;">
+                                <strong>Interactive Demo:</strong> Adjust the sliders to see how magnitude and direction change!
+                            </p>
+
+                            <canvas id="vectorBasicCanvas" width="600" height="400"></canvas>
+
+                            <div class="controls">
+                                <div class="control-group">
+                                    <label for="magnitude">Magnitude (Length):</label>
+                                    <input type="range" id="magnitude" min="0" max="5" value="3" step="0.1">
+                                    <span id="mag-value">3.0</span>
+                                </div>
+                                <div class="control-group">
+                                    <label for="direction">Direction (Angle):</label>
+                                    <input type="range" id="direction" min="0" max="360" value="45" step="5">
+                                    <span id="dir-value">45°</span>
+                                </div>
+                            </div>
+
+                            <div class="vector-math">
+                                Vector = [<span id="vec-x">2.1</span>, <span id="vec-y">2.1</span>]<br>
+                                Magnitude = <span id="calc-mag">3.0</span><br>
+                                Direction = <span id="calc-dir">45</span>°<br><br>
+                                Formula: Magnitude = √(x² + y²)
+                            </div>
+                        </div>
+
+                        <div class="example-box">
+                            <h3>Why This Matters</h3>
+                            <p><strong>Magnitude</strong> tells us "how much" of something we have.</p>
+                            <p><strong>Direction</strong> tells us "what kind" or "which way" it relates to other things.</p>
+                            <p style="margin-top: 12px;">In AI, similar meanings point in similar directions!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: How Embeddings Are Created -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>How Embeddings Are Created</h2>
+                            <p class="slide-subtitle">From Text to Numbers</p>
+                        </div>
+
+                        <p>Here's how text becomes an embedding vector through a neural network:</p>
+
+                        <div class="example-box" style="margin-top: 40px;">
+                            <h3>The Embedding Pipeline:</h3>
+                            <div class="pipeline-flow">
+                                <div class="pipeline-step">
+                                    <strong>1. Text Input</strong><br>
+                                    <small>"cat"</small>
+                                </div>
+                                <div class="pipeline-arrow">→</div>
+                                <div class="pipeline-step">
+                                    <strong>2. Tokenization</strong><br>
+                                    <small>[token_45]</small>
+                                </div>
+                                <div class="pipeline-arrow">→</div>
+                                <div class="pipeline-step">
+                                    <strong>3. Neural Network</strong><br>
+                                    <small>⚙️ Process layers</small>
+                                </div>
+                                <div class="pipeline-arrow">→</div>
+                                <div class="pipeline-step">
+                                    <strong>4. Embedding Vector</strong><br>
+                                    <small>[0.12, -0.43, ...]</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="architecture-box" style="margin-top: 32px;">
+                            <h3 style="margin-top: 0;">What Happens at Each Stage?</h3>
+
+                            <div style="margin-top: 20px;">
+                                <h4 style="color: #ef4444; margin-bottom: 8px;">1. Text Input</h4>
+                                <p>Raw text is provided as input. Example: "cat", "The cat sat", etc.</p>
+                            </div>
+
+                            <div style="margin-top: 20px;">
+                                <h4 style="color: #f97316; margin-bottom: 8px;">2. Tokenization</h4>
+                                <p>Text is split into tokens (words or subwords) and converted to numeric IDs. Each unique token has a fixed ID.</p>
+                            </div>
+
+                            <div style="margin-top: 20px;">
+                                <h4 style="color: #2563eb; margin-bottom: 8px;">3. Neural Network Processing</h4>
+                                <p>The neural network processes the token through multiple layers:</p>
+                                <ul style="margin-top: 8px; line-height: 1.8;">
+                                    <li><strong>Embedding lookup:</strong> Token ID → initial vector</li>
+                                    <li><strong>Transformer layers:</strong> Apply attention mechanism to understand context</li>
+                                    <li><strong>Feature extraction:</strong> Learn semantic patterns from billions of training examples</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 20px;">
+                                <h4 style="color: #10b981; margin-bottom: 8px;">4. Output Embedding</h4>
+                                <p>Final vector representation (typically 384, 768, or 1024 dimensions) that captures semantic meaning.</p>
+                            </div>
+                        </div>
+
+                        <div class="example-box" style="margin-top: 24px; background: #fef3c7; border-left: 4px solid #f59e0b;">
+                            <h3 style="margin-top: 0;">💡 Key Point</h3>
+                            <p><strong>The neural network learns these numbers during training on billions of text examples.</strong> It discovers patterns about which words appear together, how they're used, and their relationships — then encodes that knowledge into the vector values.</p>
+                            <p style="margin-top: 12px;">Similar words get similar vectors because they appear in similar contexts!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Word Embeddings Visualization -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Visualizing Embeddings</h2>
+                            <p class="slide-subtitle">Words in Semantic Space</p>
+                        </div>
+
+                        <p style="text-align: center; margin-bottom: 12px;">Similar words cluster together in embedding space. Click words below to see their relationships!</p>
+
+                        <div class="interactive-section">
+                            <canvas id="embeddingCanvas" width="600" height="400"></canvas>
+
+                            <div class="word-cloud">
+                                <div class="word-item" onclick="highlightWord('king')">king</div>
+                                <div class="word-item" onclick="highlightWord('queen')">queen</div>
+                                <div class="word-item" onclick="highlightWord('man')">man</div>
+                                <div class="word-item" onclick="highlightWord('woman')">woman</div>
+                                <div class="word-item" onclick="highlightWord('boy')">boy</div>
+                                <div class="word-item" onclick="highlightWord('girl')">girl</div>
+                                <div class="word-item" onclick="highlightWord('rice')">rice</div>
+                                <div class="word-item" onclick="highlightWord('biryani')">biryani</div>
+                            </div>
+                        </div>
+
+                        <div class="example-box">
+                            <p><strong>Notice:</strong> Words with similar meanings are positioned close together. This is how embeddings capture semantic relationships!</p>
+                            <ul style="margin-top: 12px;">
+                                <li><strong>Royalty cluster:</strong> king, queen (similar formality and power)</li>
+                                <li><strong>People cluster:</strong> man, woman, boy, girl (human subjects)</li>
+                                <li><strong>Food cluster:</strong> rice, biryani (culinary items)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Vector Arithmetic - Step by Step -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Direction Encodes Relationships</h2>
+                            <p class="slide-subtitle">Vector Arithmetic Step-by-Step</p>
+                        </div>
+
+                        <p>One of the most beautiful properties: <span class="highlight">directions in embedding space encode relationships</span>.</p>
+
+                        <div class="example-box">
+                            <h3>The Famous Example:</h3>
+                            <div class="vector-math" style="font-size: 1.125em; text-align: center;">
+                                king - man + woman ≈ queen
+                            </div>
+                        </div>
+
+                        <div class="interactive-section">
+                            <canvas id="vectorArithCanvas" width="600" height="400"></canvas>
+
+                            <div class="controls" style="display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                                <button class="action-btn" onclick="prevArithStep()" id="arith-prev-btn" disabled>
+                                    ← Previous
+                                </button>
+                                <button class="action-btn" onclick="nextArithStep()" id="arith-next-btn">
+                                    Next →
+                                </button>
+                                <button class="action-btn" onclick="resetArithStep()" style="margin-left: 8px;">
+                                    Reset
+                                </button>
+                            </div>
+
+                            <div class="vector-math" id="arith-status">
+                                Step <span id="arith-step-num">0</span>/5<br>
+                                <span id="arith-description">Click "Next" to begin the animation</span>
+                            </div>
+                        </div>
+
+                        <div class="example-box">
+                            <h4>What This Shows:</h4>
+                            <p>The <strong>direction</strong> from "man" to "woman" is the same as from "king" to "queen" — it represents the gender transformation concept.</p>
+                            <p style="margin-top: 8px;">This proves that embeddings don't just capture words — they capture the <strong>relationships between concepts</strong>!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Understanding Dimensions -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>What Are Dimensions?</h2>
+                            <p class="slide-subtitle">The Hidden Features</p>
+                        </div>
+
+                        <p>An embedding is a vector of numbers — each number is a <span class="highlight">dimension</span>.</p>
+
+                        <div class="vector-math" style="font-size: 1.125em;">
+                            Embedding = [0.12, -0.45, 0.87, 0.33, ...] → 768 dimensions
+                        </div>
+
+                        <p>If you use an embedding model with 768 dimensions, the meaning of the text is represented as a point in <strong>768-dimensional space</strong>.</p>
+
+                        <div class="example-box">
+                            <h3>Think of Dimensions as Abstract Features</h3>
+                            <p>Each dimension might capture some aspect of meaning. For example:</p>
+
+                            <table style="margin-top: 16px;">
+                                <thead>
+                                    <tr>
+                                        <th>Dimension</th>
+                                        <th>Might Represent</th>
+                                        <th>Example Words</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Dimension 1</td>
+                                        <td>Gender (male ↔ female)</td>
+                                        <td>king(+) vs queen(-)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dimension 2</td>
+                                        <td>Animacy (living ↔ object)</td>
+                                        <td>cat(+) vs table(-)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dimension 3</td>
+                                        <td>Sentiment (positive ↔ negative)</td>
+                                        <td>love(+) vs hate(-)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dimension 4-768</td>
+                                        <td>Many other abstract concepts</td>
+                                        <td>Formality, tense, topic...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <table style="margin-top: 24px;">
+                            <thead>
+                                <tr>
+                                    <th>Dimension Count</th>
+                                    <th>Characteristics</th>
+                                    <th>Use Case</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>50-100</td>
+                                    <td>Fast but less expressive</td>
+                                    <td>Simple similarity tasks</td>
+                                </tr>
+                                <tr>
+                                    <td>384-512</td>
+                                    <td>Good balance</td>
+                                    <td>Most semantic search</td>
+                                </tr>
+                                <tr>
+                                    <td>768-1536</td>
+                                    <td>Very expressive, slower</td>
+                                    <td>Complex understanding</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Contextual Embeddings -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>How LLMs Understand Context</h2>
+                            <p class="slide-subtitle">Same Word, Different Meanings</p>
+                        </div>
+
+                        <p>Modern LLMs don't just create one embedding per word — they create <span class="highlight">contextual embeddings</span> that change based on usage.</p>
+
+                        <div class="example-box">
+                            <h3>Example: The Word "Apple"</h3>
+
+                            <div class="context-example">
+                                <p><strong>Sentence 1:</strong> "<span style="background: #fef3c7;">Apple</span> is tasty and nutritious."</p>
+                                <div class="vector-math" style="margin-top: 8px;">
+                                    Embedding₁ = [0.82, 0.15, -0.43, ...] → Points toward "food"
+                                </div>
+                            </div>
+
+                            <div class="context-example">
+                                <p><strong>Sentence 2:</strong> "<span style="background: #fef3c7;">Apple</span> released a new iPhone model."</p>
+                                <div class="vector-math" style="margin-top: 8px;">
+                                    Embedding₂ = [-0.21, 0.78, 0.34, ...] → Points toward "technology company"
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="interactive-section">
+                            <canvas id="contextCanvas" width="600" height="400"></canvas>
+                            <div class="controls">
+                                <button class="action-btn" onclick="toggleContext()">
+                                    Toggle Context: <span id="context-label">Food</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="example-box">
+                            <h4>How Does It Work?</h4>
+                            <p><strong>Step 1: Co-occurrence Learning</strong></p>
+                            <ul>
+                                <li>"apple" + "tasty" + "eat" → Food context</li>
+                                <li>"apple" + "iPhone" + "released" → Company context</li>
+                            </ul>
+
+                            <p style="margin-top: 12px;"><strong>Step 2: Attention Mechanism</strong></p>
+                            <p>The LLM looks at surrounding words and adjusts the embedding dynamically using self-attention:
+                            <div class="vector-math" style="margin-top: 8px;">
+                                Embedding(Apple) = f(Apple, Surrounding_Words)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Knowledge Representation Evolution -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Knowledge Representation in AI</h2>
+                            <p class="slide-subtitle">From Symbols to Vectors</p>
+                        </div>
+
+                        <p>Embeddings represent a fundamental shift in how AI stores and uses knowledge.</p>
+
+                        <div class="evolution-diagram">
+                            <div class="evolution-step">
+                                <strong>🔤 Symbolic AI</strong>
+                                <p style="font-size: 0.875em; color: var(--text-secondary);">1950s-1980s</p>
+                                <div class="vector-math" style="font-size: 0.875em; margin-top: 12px;">
+                                    IF boy<br>THEN human
+                                </div>
+                                <p style="font-size: 0.75em; margin-top: 8px;">✅ Explainable<br>❌ Brittle</p>
+                            </div>
+
+                            <div class="evolution-arrow">→</div>
+
+                            <div class="evolution-step active">
+                                <strong>🧬 Sub-symbolic AI</strong>
+                                <p style="font-size: 0.875em; color: var(--text-secondary);">2010s-Present</p>
+                                <div class="vector-math" style="font-size: 0.875em; margin-top: 12px;">
+                                    [0.23, -0.11, ...]
+                                </div>
+                                <p style="font-size: 0.75em; margin-top: 8px;">✅ Scalable<br>❌ Black box</p>
+                            </div>
+
+                            <div class="evolution-arrow">→</div>
+
+                            <div class="evolution-step">
+                                <strong>🔮 Hybrid AI</strong>
+                                <p style="font-size: 0.875em; color: var(--text-secondary);">Future</p>
+                                <div class="vector-math" style="font-size: 0.875em; margin-top: 12px;">
+                                    LLM + Graphs
+                                </div>
+                                <p style="font-size: 0.75em; margin-top: 8px;">✅ Best of both</p>
+                            </div>
+                        </div>
+
+                        <table style="margin-top: 32px;">
+                            <thead>
+                                <tr>
+                                    <th>Aspect</th>
+                                    <th>Symbolic KR</th>
+                                    <th>Sub-symbolic (Embeddings)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Format</td>
+                                    <td>Words, rules, graphs</td>
+                                    <td>Vectors of numbers</td>
+                                </tr>
+                                <tr>
+                                    <td>Human Readable</td>
+                                    <td>✅ Yes</td>
+                                    <td>❌ No (black box)</td>
+                                </tr>
+                                <tr>
+                                    <td>Scalability</td>
+                                    <td>❌ Limited</td>
+                                    <td>✅ Massive</td>
+                                </tr>
+                                <tr>
+                                    <td>Learning</td>
+                                    <td>Manual rules</td>
+                                    <td>Learned from data</td>
+                                </tr>
+                                <tr>
+                                    <td>Context</td>
+                                    <td>❌ Fixed</td>
+                                    <td>✅ Dynamic</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Slide 9: Semantic Search Pipeline -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Semantic Search in Action</h2>
+                            <p class="slide-subtitle">Putting Knowledge Encoding to Work</p>
+                        </div>
+
+                        <p>When you store embeddings in a vector database and query via LLMs, you're doing <span class="highlight">semantic reasoning over geometric knowledge</span>.</p>
+
+                        <div class="example-box">
+                            <h3>The Complete Pipeline:</h3>
+                            <div style="padding: 20px; background: white; border-radius: 8px; margin-top: 12px;">
+                                <div class="pipeline-flow">
+                                    <div class="pipeline-step">
+                                        <strong>📝 Documents</strong><br>
+                                        <small>Your data</small>
+                                    </div>
+                                    <div class="pipeline-arrow">→</div>
+                                    <div class="pipeline-step">
+                                        <strong>🤖 LLM Encoder</strong><br>
+                                        <small>Process text</small>
+                                    </div>
+                                    <div class="pipeline-arrow">→</div>
+                                    <div class="pipeline-step">
+                                        <strong>📊 Embeddings</strong><br>
+                                        <small>768D vectors</small>
+                                    </div>
+                                    <div class="pipeline-arrow">→</div>
+                                    <div class="pipeline-step">
+                                        <strong>💾 Vector DB</strong><br>
+                                        <small>Store & index</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="example-box">
+                            <h3>Search Query Flow:</h3>
+                            <div style="padding: 20px; background: white; border-radius: 8px; margin-top: 12px;">
+                                <div class="pipeline-flow">
+                                    <div class="pipeline-step">
+                                        <strong>🔍 Query</strong><br>
+                                        <small>"biryani recipe"</small>
+                                    </div>
+                                    <div class="pipeline-arrow">→</div>
+                                    <div class="pipeline-step">
+                                        <strong>🤖 Encode</strong><br>
+                                        <small>Create embedding</small>
+                                    </div>
+                                    <div class="pipeline-arrow">→</div>
+                                    <div class="pipeline-step">
+                                        <strong>📐 Compare</strong><br>
+                                        <small>Find nearest</small>
+                                    </div>
+                                    <div class="pipeline-arrow">→</div>
+                                    <div class="pipeline-step">
+                                        <strong>✅ Results</strong><br>
+                                        <small>Similar docs</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <table style="margin-top: 24px;">
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Role</th>
+                                    <th>What It Does</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Vector Database</td>
+                                    <td>Knowledge Base</td>
+                                    <td>Stores embeddings efficiently with indexing</td>
+                                </tr>
+                                <tr>
+                                    <td>Embedding Space</td>
+                                    <td>Knowledge Geometry</td>
+                                    <td>Encodes relationships as distances and directions</td>
+                                </tr>
+                                <tr>
+                                    <td>LLM</td>
+                                    <td>Reasoning Engine</td>
+                                    <td>Encodes queries and interprets results</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin-top: 24px;">
+                            <p style="text-align: center; font-size: 1.125em; margin: 0;">
+                                <strong>Key Insight:</strong> Semantic Search = Finding the nearest neighbors in embedding space = Finding similar meanings!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 10: Key Takeaways -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Key Takeaways</h2>
+                            <p class="slide-subtitle">Understanding Knowledge Encoding</p>
+                        </div>
+
+                        <table style="margin-bottom: 32px;">
+                            <thead>
+                                <tr>
+                                    <th>Concept</th>
+                                    <th>What It Means</th>
+                                    <th>Why It Matters</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Vector</strong></td>
+                                    <td>Numbers with magnitude & direction</td>
+                                    <td>Basis for all embedding operations</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Embedding</strong></td>
+                                    <td>Vector that captures semantic meaning</td>
+                                    <td>Core of LLM-based understanding</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dimensions</strong></td>
+                                    <td>Abstract learned features (768+)</td>
+                                    <td>Enable rich semantic representation</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Direction</strong></td>
+                                    <td>Encodes relationships between concepts</td>
+                                    <td>Allows vector arithmetic and analogies</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Context</strong></td>
+                                    <td>Dynamic embeddings based on usage</td>
+                                    <td>Handles word ambiguity (polysemy)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>LLM</strong></td>
+                                    <td>Generates contextual embeddings</td>
+                                    <td>Enables semantic search and reasoning</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <ul style="font-size: 1.125em; line-height: 2;">
+                            <li>Embeddings are <strong>sub-symbolic knowledge representation</strong> — meaning encoded as geometry</li>
+                            <li>Similar meanings = <strong>close vectors</strong> in embedding space</li>
+                            <li>Directions encode <strong>relationships</strong> (gender, tense, category, etc.)</li>
+                            <li>More dimensions = <strong>more expressive</strong> but higher computational cost</li>
+                            <li>LLMs learn embeddings from <strong>patterns in data</strong>, not explicit rules</li>
+                            <li>Context matters — same word can have <strong>different embeddings</strong> in different sentences</li>
+                            <li>Semantic search leverages this <strong>geometric knowledge</strong> for intelligent retrieval</li>
+                        </ul>
+
+                        <div style="text-align: center; margin-top: 60px;">
+                            <a href="llm-models.html" style="text-decoration: none;">
+                                <button class="action-btn" style="padding: 16px 32px; font-size: 1.125em;">
+                                    Next: LLM Models with Ollama →
+                                </button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Navigation Controls -->
+        <div class="carousel-nav">
+            <button id="prevBtn" onclick="prevSlide()">← Previous</button>
+
+            <div class="nav-center">
+                <div class="slide-indicators" id="slideIndicators"></div>
+                <span class="slide-counter">
+                    <span id="currentSlide">1</span> / <span id="totalSlides">10</span>
+                </span>
+            </div>
+
+            <button id="nextBtn" onclick="nextSlide()">Next →</button>
+        </div>
+    </div>
+
+    <div class="keyboard-hint" id="keyboardHint">
+        Use <kbd>←</kbd> <kbd>→</kbd> arrow keys to navigate
+    </div>
+
+    <script>
+        // Carousel State
+        let currentSlide = 0;
+        const totalSlides = 10;
+        const carouselWrapper = document.getElementById('carouselWrapper');
+        const progressFill = document.getElementById('progressFill');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        function initCarousel() {
+            updateSlide();
+            createIndicators();
+            setTimeout(() => {
+                document.getElementById('keyboardHint').style.animation = 'fadeInOut 3s ease-in-out';
+            }, 1000);
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlide();
+        }
+
+        function updateSlide() {
+            const offset = -currentSlide * 100;
+            carouselWrapper.style.transform = `translateX(${offset}%)`;
+
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressFill.style.width = `${progress}%`;
+
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+
+            updateIndicators();
+
+            setTimeout(() => {
+                if (currentSlide === 1) drawVectorBasics();
+                if (currentSlide === 3) drawEmbeddingSpace();
+                if (currentSlide === 4) drawVectorArithmetic();
+                if (currentSlide === 6) drawContextual();
+            }, 100);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('slideIndicators');
+            for (let i = 0; i < totalSlides; i++) {
+                const indicator = document.createElement('div');
+                indicator.className = 'slide-indicator';
+                indicator.onclick = () => goToSlide(i);
+                container.appendChild(indicator);
+            }
+            updateIndicators();
+        }
+
+        function updateIndicators() {
+            const indicators = document.querySelectorAll('.slide-indicator');
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // SLIDE 2: Vector Basics - Magnitude and Direction
+        const vectorBasicCanvas = document.getElementById('vectorBasicCanvas');
+        const vbCtx = vectorBasicCanvas.getContext('2d');
+        const magnitudeInput = document.getElementById('magnitude');
+        const directionInput = document.getElementById('direction');
+
+        function drawVectorBasics() {
+            const mag = parseFloat(magnitudeInput.value);
+            const dir = parseFloat(directionInput.value);
+
+            vbCtx.clearRect(0, 0, vectorBasicCanvas.width, vectorBasicCanvas.height);
+
+            // Draw grid
+            vbCtx.strokeStyle = '#e2e8f0';
+            vbCtx.lineWidth = 1;
+            for (let i = 0; i <= 600; i += 50) {
+                vbCtx.beginPath();
+                vbCtx.moveTo(i, 0);
+                vbCtx.lineTo(i, 400);
+                vbCtx.stroke();
+            }
+            for (let i = 0; i <= 400; i += 50) {
+                vbCtx.beginPath();
+                vbCtx.moveTo(0, i);
+                vbCtx.lineTo(600, i);
+                vbCtx.stroke();
+            }
+
+            // Draw axes
+            vbCtx.strokeStyle = '#64748b';
+            vbCtx.lineWidth = 2;
+            vbCtx.beginPath();
+            vbCtx.moveTo(0, 200);
+            vbCtx.lineTo(600, 200);
+            vbCtx.stroke();
+            vbCtx.beginPath();
+            vbCtx.moveTo(300, 0);
+            vbCtx.lineTo(300, 400);
+            vbCtx.stroke();
+
+            // Calculate vector components
+            const angleRad = (dir * Math.PI) / 180;
+            const x = mag * Math.cos(angleRad);
+            const y = mag * Math.sin(angleRad);
+
+            const scale = 50;
+            const endX = 300 + x * scale;
+            const endY = 200 - y * scale;
+
+            // Draw magnitude arc
+            vbCtx.strokeStyle = '#10b981';
+            vbCtx.lineWidth = 2;
+            vbCtx.setLineDash([5, 5]);
+            vbCtx.beginPath();
+            vbCtx.arc(300, 200, mag * scale, 0, -angleRad, true);
+            vbCtx.stroke();
+            vbCtx.setLineDash([]);
+
+            // Draw angle arc
+            vbCtx.strokeStyle = '#ef4444';
+            vbCtx.lineWidth = 2;
+            vbCtx.beginPath();
+            vbCtx.arc(300, 200, 50, 0, -angleRad, true);
+            vbCtx.stroke();
+
+            // Draw vector
+            vbCtx.strokeStyle = '#2563eb';
+            vbCtx.fillStyle = '#2563eb';
+            vbCtx.lineWidth = 4;
+
+            vbCtx.beginPath();
+            vbCtx.moveTo(300, 200);
+            vbCtx.lineTo(endX, endY);
+            vbCtx.stroke();
+
+            // Arrow head
+            const angle = Math.atan2(endY - 200, endX - 300);
+            vbCtx.beginPath();
+            vbCtx.moveTo(endX, endY);
+            vbCtx.lineTo(endX - 15 * Math.cos(angle - Math.PI / 6), endY - 15 * Math.sin(angle - Math.PI / 6));
+            vbCtx.lineTo(endX - 15 * Math.cos(angle + Math.PI / 6), endY - 15 * Math.sin(angle + Math.PI / 6));
+            vbCtx.closePath();
+            vbCtx.fill();
+
+            // Labels
+            vbCtx.fillStyle = '#10b981';
+            vbCtx.font = 'bold 14px Arial';
+            vbCtx.fillText('Magnitude', endX / 2 + 150, endY / 2 + 180);
+
+            vbCtx.fillStyle = '#ef4444';
+            vbCtx.fillText('Direction', 320, 185);
+
+            // Update values
+            document.getElementById('mag-value').textContent = mag.toFixed(1);
+            document.getElementById('dir-value').textContent = dir + '°';
+            document.getElementById('vec-x').textContent = x.toFixed(1);
+            document.getElementById('vec-y').textContent = y.toFixed(1);
+            document.getElementById('calc-mag').textContent = mag.toFixed(1);
+            document.getElementById('calc-dir').textContent = dir;
+        }
+
+        magnitudeInput.addEventListener('input', drawVectorBasics);
+        directionInput.addEventListener('input', drawVectorBasics);
+
+        // SLIDE 4: Embedding Space Visualization
+        const embeddingCanvas = document.getElementById('embeddingCanvas');
+        const embCtx = embeddingCanvas.getContext('2d');
+
+        const words = {
+            'king': { x: 400, y: 150, category: 'royalty', color: '#2563eb' },
+            'queen': { x: 420, y: 250, category: 'royalty', color: '#2563eb' },
+            'man': { x: 200, y: 140, category: 'person', color: '#10b981' },
+            'woman': { x: 220, y: 240, category: 'person', color: '#e11d48' },
+            'boy': { x: 180, y: 180, category: 'person', color: '#10b981' },
+            'girl': { x: 200, y: 260, category: 'person', color: '#10b981' },
+            'rice': { x: 450, y: 300, category: 'food', color: '#ef4444' },
+            'biryani': { x: 480, y: 340, category: 'food', color: '#ef4444' }
+        };
+
+        let selectedWord = null;
+
+        function drawEmbeddingSpace() {
+            embCtx.clearRect(0, 0, embeddingCanvas.width, embeddingCanvas.height);
+
+            // Draw grid
+            embCtx.strokeStyle = '#e2e8f0';
+            embCtx.lineWidth = 1;
+            for (let i = 0; i <= 600; i += 50) {
+                embCtx.beginPath();
+                embCtx.moveTo(i, 0);
+                embCtx.lineTo(i, 400);
+                embCtx.stroke();
+            }
+            for (let i = 0; i <= 400; i += 50) {
+                embCtx.beginPath();
+                embCtx.moveTo(0, i);
+                embCtx.lineTo(600, i);
+                embCtx.stroke();
+            }
+
+            // Draw axes labels
+            embCtx.fillStyle = '#64748b';
+            embCtx.font = 'bold 14px Arial';
+            embCtx.fillText('← Gender (Male/Female) →', 220, 390);
+            embCtx.save();
+            embCtx.translate(15, 200);
+            embCtx.rotate(-Math.PI / 2);
+            embCtx.fillText('← Formality (Casual/Formal) →', -80, 0);
+            embCtx.restore();
+
+            // Draw cluster labels
+            embCtx.font = 'bold 12px Arial';
+            embCtx.fillStyle = '#2563eb';
+            embCtx.fillText('Royalty Cluster', 360, 120);
+            embCtx.fillStyle = '#10b981';
+            embCtx.fillText('People Cluster', 150, 150);
+            embCtx.fillStyle = '#ef4444';
+            embCtx.fillText('Food Cluster', 430, 270);
+
+            // Draw connections for selected word
+            if (selectedWord && words[selectedWord]) {
+                const selected = words[selectedWord];
+                embCtx.strokeStyle = selected.color + '40';
+                embCtx.lineWidth = 2;
+
+                for (let word in words) {
+                    if (word !== selectedWord && words[word].category === selected.category) {
+                        embCtx.beginPath();
+                        embCtx.moveTo(selected.x, selected.y);
+                        embCtx.lineTo(words[word].x, words[word].y);
+                        embCtx.stroke();
+                    }
+                }
+            }
+
+            // Draw words
+            for (let word in words) {
+                const w = words[word];
+                embCtx.fillStyle = w.color;
+                embCtx.beginPath();
+                embCtx.arc(w.x, w.y, selectedWord === word ? 10 : 6, 0, Math.PI * 2);
+                embCtx.fill();
+
+                embCtx.fillStyle = '#0f172a';
+                embCtx.font = selectedWord === word ? 'bold 14px Arial' : '12px Arial';
+                embCtx.fillText(word, w.x + 12, w.y + 4);
+            }
+        }
+
+        function highlightWord(word) {
+            selectedWord = word;
+
+            // Update UI
+            document.querySelectorAll('.word-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+
+            drawEmbeddingSpace();
+        }
+
+        // SLIDE 5: Vector Arithmetic Step-by-Step
+        const vectorArithCanvas = document.getElementById('vectorArithCanvas');
+        const vaCtx = vectorArithCanvas.getContext('2d');
+        let arithStep = 0;
+
+        function drawVectorArithmetic() {
+            vaCtx.clearRect(0, 0, vectorArithCanvas.width, vectorArithCanvas.height);
+
+            // Draw grid
+            vaCtx.strokeStyle = '#e2e8f0';
+            vaCtx.lineWidth = 1;
+            for (let i = 0; i <= 600; i += 50) {
+                vaCtx.beginPath();
+                vaCtx.moveTo(i, 0);
+                vaCtx.lineTo(i, 400);
+                vaCtx.stroke();
+            }
+            for (let i = 0; i <= 400; i += 50) {
+                vaCtx.beginPath();
+                vaCtx.moveTo(0, i);
+                vaCtx.lineTo(600, i);
+                vaCtx.stroke();
+            }
+
+            // Draw axes
+            vaCtx.strokeStyle = '#64748b';
+            vaCtx.lineWidth = 2;
+            vaCtx.beginPath();
+            vaCtx.moveTo(0, 200);
+            vaCtx.lineTo(600, 200);
+            vaCtx.stroke();
+            vaCtx.beginPath();
+            vaCtx.moveTo(300, 0);
+            vaCtx.lineTo(300, 400);
+            vaCtx.stroke();
+
+            const centerX = 300, centerY = 200;
+            const scale = 40;
+
+            // Vector positions
+            const king = { x: 3, y: 1, label: 'king', labelOffset: { x: 10, y: -10 } };
+            const man = { x: 1.5, y: 0, label: 'man', labelOffset: { x: 10, y: 15 } };
+            const woman = { x: 1.5, y: -2, label: 'woman', labelOffset: { x: 10, y: 30 } };
+            const queen = { x: 3, y: -1, label: 'queen', labelOffset: { x: 10, y: 35 } };
+
+            // ALWAYS draw all base vectors in dotted gray (background)
+            if (arithStep > 0) {
+                drawVectorDotted(vaCtx, centerX, centerY, king.x * scale, king.y * scale, '#cbd5e1', 'king', 1.5);
+                drawVectorDotted(vaCtx, centerX, centerY, man.x * scale, man.y * scale, '#cbd5e1', 'man', 1.5);
+                drawVectorDotted(vaCtx, centerX, centerY, woman.x * scale, woman.y * scale, '#cbd5e1', 'woman', 1.5);
+                drawVectorDotted(vaCtx, centerX, centerY, queen.x * scale, queen.y * scale, '#cbd5e1', 'queen', 1.5);
+            }
+
+            // Now draw highlighted vectors based on step
+            if (arithStep === 0) {
+                // Initial state - show all vectors grayed with labels
+                drawVectorDotted(vaCtx, centerX, centerY, king.x * scale, king.y * scale, '#cbd5e1', 'king', 2);
+                drawVectorDotted(vaCtx, centerX, centerY, man.x * scale, man.y * scale, '#cbd5e1', 'man', 2);
+                drawVectorDotted(vaCtx, centerX, centerY, woman.x * scale, woman.y * scale, '#cbd5e1', 'woman', 2);
+                drawVectorDotted(vaCtx, centerX, centerY, queen.x * scale, queen.y * scale, '#cbd5e1', 'queen', 2);
+            } else if (arithStep === 1) {
+                // Highlight king (no label, using gray label from background)
+                drawVectorSolid(vaCtx, centerX, centerY, king.x * scale, king.y * scale, '#2563eb', '', 3, king.labelOffset);
+            } else if (arithStep === 2) {
+                // Highlight king and man (no labels, using gray labels from background)
+                drawVectorSolid(vaCtx, centerX, centerY, king.x * scale, king.y * scale, '#2563eb', '', 3, king.labelOffset);
+                drawVectorSolid(vaCtx, centerX, centerY, man.x * scale, man.y * scale, '#10b981', '', 3, man.labelOffset);
+            } else if (arithStep === 3) {
+                // Show king - man operation
+                drawVectorSolid(vaCtx, centerX, centerY, king.x * scale, king.y * scale, '#cbd5e1', '', 2, king.labelOffset);
+
+                // Draw -man vector starting from king's endpoint
+                drawVectorSolid(vaCtx, centerX + king.x * scale, centerY - king.y * scale,
+                          -man.x * scale, man.y * scale, '#ef4444', '- man', 3, { x: -50, y: -10 });
+
+                const result1X = king.x - man.x;
+                const result1Y = king.y - man.y;
+                drawVectorSolid(vaCtx, centerX, centerY, result1X * scale, result1Y * scale, '#f97316', 'king - man', 4, { x: 10, y: -20 });
+            } else if (arithStep === 4) {
+                // Show (king - man) + woman
+                const result1X = king.x - man.x;
+                const result1Y = king.y - man.y;
+
+                // Highlight the base woman vector to show what we're adding
+                drawVectorSolid(vaCtx, centerX, centerY, woman.x * scale, woman.y * scale, '#e11d48', '', 3, woman.labelOffset);
+
+                drawVectorSolid(vaCtx, centerX, centerY, result1X * scale, result1Y * scale, '#cbd5e1', '', 2, { x: 10, y: -10 });
+
+                // Draw woman vector starting from result1's endpoint (operation)
+                drawVectorSolid(vaCtx, centerX + result1X * scale, centerY - result1Y * scale,
+                          woman.x * scale, woman.y * scale, '#e11d48', '+ woman', 3, { x: 10, y: -15 });
+
+                const finalX = result1X + woman.x;
+                const finalY = result1Y + woman.y;
+                drawVectorSolid(vaCtx, centerX, centerY, finalX * scale, finalY * scale, '#2563eb', '', 4, { x: -65, y: 45 });
+            } else if (arithStep === 5) {
+                // Show result compared with actual queen - they match!
+                const result1X = king.x - man.x;
+                const result1Y = king.y - man.y;
+                const finalX = result1X + woman.x;
+                const finalY = result1Y + woman.y;
+
+                // Highlight queen vector to show what we're comparing with
+                drawVectorSolid(vaCtx, centerX, centerY, queen.x * scale, queen.y * scale, '#10b981', 'queen', 4, { x: 20, y: 40 });
+
+                // Draw result vector without label
+                drawVectorSolid(vaCtx, centerX, centerY, finalX * scale, finalY * scale, '#2563eb', '', 4, { x: -65, y: 50 });
+
+                // Draw similarity indicator line
+                vaCtx.strokeStyle = '#fbbf24';
+                vaCtx.lineWidth = 3;
+                vaCtx.setLineDash([8, 4]);
+                vaCtx.beginPath();
+                vaCtx.moveTo(centerX + finalX * scale, centerY - finalY * scale);
+                vaCtx.lineTo(centerX + queen.x * scale, centerY - queen.y * scale);
+                vaCtx.stroke();
+                vaCtx.setLineDash([]);
+            }
+
+            // Update status
+            const statusTexts = [
+                'All vectors shown. Click Next to begin step-by-step demonstration',
+                'Step 1: Start with the "king" vector (blue)',
+                'Step 2: Reference "man" vector (green) for comparison',
+                'Step 3: Subtract "man" from "king" → represents "royalty without male gender"',
+                'Step 4: Add "woman" vector (rose) → the result approximates the queen vector',
+                'Step 5: Compare result with actual "queen" vector (green) - very close match! The direction from man→woman equals king→queen'
+            ];
+
+            document.getElementById('arith-step-num').textContent = arithStep;
+            document.getElementById('arith-description').textContent = statusTexts[arithStep];
+
+            // Update button states
+            const prevBtn = document.getElementById('arith-prev-btn');
+            const nextBtn = document.getElementById('arith-next-btn');
+
+            prevBtn.disabled = arithStep === 0;
+            nextBtn.disabled = arithStep === 5;
+        }
+
+        // Helper function to draw solid vector with custom label offset
+        function drawVectorSolid(ctx, fromX, fromY, dx, dy, color, label, width, labelOffset = {x: 10, y: -10}) {
+            const toX = fromX + dx;
+            const toY = fromY - dy; // Flip Y for canvas
+
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = width;
+
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+
+            // Arrow head
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - 12 * Math.cos(angle - Math.PI / 6), toY - 12 * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - 12 * Math.cos(angle + Math.PI / 6), toY - 12 * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw label with custom offset
+            if (label) {
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(label, toX + labelOffset.x, toY + labelOffset.y);
+            }
+        }
+
+        // Helper function to draw dotted/dashed vector
+        function drawVectorDotted(ctx, fromX, fromY, dx, dy, color, label, width) {
+            const toX = fromX + dx;
+            const toY = fromY - dy; // Flip Y for canvas
+
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = width;
+            ctx.setLineDash([5, 5]);
+
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+
+            // Arrow head (lighter)
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - 10 * Math.cos(angle - Math.PI / 6), toY - 10 * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - 10 * Math.cos(angle + Math.PI / 6), toY - 10 * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.setLineDash([]);
+
+            // Draw label if provided with smart positioning
+            if (label) {
+                ctx.font = '12px Arial';
+                ctx.fillStyle = '#94a3b8'; // Slightly lighter gray for background labels
+
+                // Determine label position based on vector direction and label
+                let offsetX = 15;
+                let offsetY = -10;
+
+                if (label === 'woman' || label === 'queen') {
+                    offsetY = 30; // Move down more for bottom vectors
+                } else if (dy > 0) { // Vector pointing up
+                    offsetY = -15;
+                } else if (dy < 0) { // Vector pointing down
+                    offsetY = 25;
+                }
+
+                ctx.fillText(label, toX + offsetX, toY + offsetY);
+            }
+        }
+
+        function nextArithStep() {
+            if (arithStep < 5) {
+                arithStep++;
+                drawVectorArithmetic();
+            }
+        }
+
+        function prevArithStep() {
+            if (arithStep > 0) {
+                arithStep--;
+                drawVectorArithmetic();
+            }
+        }
+
+        function resetArithStep() {
+            arithStep = 0;
+            drawVectorArithmetic();
+        }
+
+        // SLIDE 7: Contextual Embeddings
+        const contextCanvas = document.getElementById('contextCanvas');
+        const ctxCtx = contextCanvas.getContext('2d');
+        let contextMode = 0; // 0 = food, 1 = company
+
+        function drawContextual() {
+            ctxCtx.clearRect(0, 0, contextCanvas.width, contextCanvas.height);
+
+            // Draw grid
+            ctxCtx.strokeStyle = '#e2e8f0';
+            ctxCtx.lineWidth = 1;
+            for (let i = 0; i <= 600; i += 50) {
+                ctxCtx.beginPath();
+                ctxCtx.moveTo(i, 0);
+                ctxCtx.lineTo(i, 400);
+                ctxCtx.stroke();
+            }
+            for (let i = 0; i <= 400; i += 50) {
+                ctxCtx.beginPath();
+                ctxCtx.moveTo(0, i);
+                ctxCtx.lineTo(600, i);
+                ctxCtx.stroke();
+            }
+
+            // Axes labels
+            ctxCtx.fillStyle = '#64748b';
+            ctxCtx.font = 'bold 12px Arial';
+            ctxCtx.fillText('Technology ← → Food', 230, 390);
+
+            // Draw context clusters
+            if (contextMode === 0) {
+                // Food context
+                ctxCtx.fillStyle = '#ef4444';
+                ctxCtx.font = 'bold 14px Arial';
+                ctxCtx.fillText('Food Cluster', 420, 120);
+
+                // Apple (food)
+                ctxCtx.beginPath();
+                ctxCtx.arc(450, 150, 12, 0, Math.PI * 2);
+                ctxCtx.fill();
+                ctxCtx.fillStyle = '#0f172a';
+                ctxCtx.font = 'bold 16px Arial';
+                ctxCtx.fillText('Apple (fruit)', 465, 155);
+
+                // Related words
+                ctxCtx.fillStyle = '#ef4444';
+                ctxCtx.beginPath();
+                ctxCtx.arc(420, 200, 8, 0, Math.PI * 2);
+                ctxCtx.fill();
+                ctxCtx.fillStyle = '#0f172a';
+                ctxCtx.font = '12px Arial';
+                ctxCtx.fillText('banana', 432, 203);
+
+                ctxCtx.fillStyle = '#ef4444';
+                ctxCtx.beginPath();
+                ctxCtx.arc(480, 180, 8, 0, Math.PI * 2);
+                ctxCtx.fill();
+                ctxCtx.fillStyle = '#0f172a';
+                ctxCtx.fillText('orange', 492, 183);
+
+                ctxCtx.fillStyle = '#ef4444';
+                ctxCtx.beginPath();
+                ctxCtx.arc(440, 230, 8, 0, Math.PI * 2);
+                ctxCtx.fill();
+                ctxCtx.fillStyle = '#0f172a';
+                ctxCtx.fillText('tasty', 452, 233);
+            } else {
+                // Company context
+                ctxCtx.fillStyle = '#2563eb';
+                ctxCtx.font = 'bold 14px Arial';
+                ctxCtx.fillText('Technology Cluster', 90, 120);
+
+                // Apple (company)
+                ctxCtx.beginPath();
+                ctxCtx.arc(150, 150, 12, 0, Math.PI * 2);
+                ctxCtx.fill();
+                ctxCtx.fillStyle = '#0f172a';
+                ctxCtx.font = 'bold 16px Arial';
+                ctxCtx.fillText('Apple (company)', 165, 155);
+
+                // Related words
+                ctxCtx.fillStyle = '#2563eb';
+                ctxCtx.beginPath();
+                ctxCtx.arc(120, 200, 8, 0, Math.PI * 2);
+                ctxCtx.fill();
+                ctxCtx.fillStyle = '#0f172a';
+                ctxCtx.font = '12px Arial';
+                ctxCtx.fillText('iPhone', 132, 203);
+
+                ctxCtx.fillStyle = '#2563eb';
+                ctxCtx.beginPath();
+                ctxCtx.arc(180, 180, 8, 0, Math.PI * 2);
+                ctxCtx.fill();
+                ctxCtx.fillStyle = '#0f172a';
+                ctxCtx.fillText('Microsoft', 192, 183);
+
+                ctxCtx.fillStyle = '#2563eb';
+                ctxCtx.beginPath();
+                ctxCtx.arc(140, 230, 8, 0, Math.PI * 2);
+                ctxCtx.fill();
+                ctxCtx.fillStyle = '#0f172a';
+                ctxCtx.fillText('technology', 152, 233);
+            }
+        }
+
+        function toggleContext() {
+            contextMode = (contextMode + 1) % 2;
+            drawContextual();
+            document.getElementById('context-label').textContent = contextMode === 0 ? 'Food' : 'Company';
+        }
+
+        initCarousel();
+    </script>
+</body>
+</html>

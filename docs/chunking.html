@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Chunking Strategies - Semantic Search Course</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/carousel.css">
+    <style>
+        .title-slide {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .title-slide h1 {
+            font-size: 3em;
+            margin-bottom: 16px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .title-slide .course-info {
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.125em;
+            line-height: 1.8;
+        }
+
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .strategy-badge {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .strategy-badge:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .strategy-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        .strategy-name {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9em;
+        }
+
+        .story-container {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .story-text {
+            font-size: 1.05em;
+            line-height: 1.8;
+            color: var(--text);
+            font-family: 'Georgia', serif;
+            margin-bottom: 20px;
+        }
+
+        .chunk-visualization {
+            margin: 24px 0;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .chunk-item {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .chunk-item:hover {
+            box-shadow: 0 2px 8px var(--shadow);
+            transform: translateX(4px);
+        }
+
+        .chunk-label {
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+            opacity: 0.7;
+        }
+
+        .chunk-content {
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .chunk-meta {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-family: monospace;
+        }
+
+        .strategy-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .strategy-btn {
+            padding: 10px 20px;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .strategy-btn:hover {
+            border-color: var(--primary);
+        }
+
+        .strategy-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .qa-section {
+            margin-top: 32px;
+        }
+
+        .question-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .question-text {
+            font-size: 1.05em;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .question-icon {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+
+        .answer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .answer-card {
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 0.9em;
+        }
+
+        .answer-card.good {
+            background: #d1fae5;
+            border-color: #059669;
+        }
+
+        .answer-card.poor {
+            background: #fee2e2;
+            border-color: #dc2626;
+        }
+
+        .answer-card.ok {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .answer-label {
+            font-weight: 700;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .answer-content {
+            line-height: 1.5;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            font-size: 0.9em;
+        }
+
+        .comparison-table th {
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table tr:hover {
+            background: var(--bg);
+        }
+
+        .visual-demo {
+            margin: 24px 0;
+        }
+
+        .text-highlight {
+            background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .formula-box {
+            background: var(--bg);
+            border-left: 4px solid var(--primary);
+            padding: 16px;
+            margin: 16px 0;
+            font-family: monospace;
+            font-size: 0.95em;
+            border-radius: 4px;
+        }
+
+        .pros-cons-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .pros-box, .cons-box {
+            padding: 16px;
+            border-radius: 8px;
+            border: 2px solid;
+        }
+
+        .pros-box {
+            background: #d1fae5;
+            border-color: #059669;
+        }
+
+        .cons-box {
+            background: #fee2e2;
+            border-color: #dc2626;
+        }
+
+        .pros-box h4, .cons-box h4 {
+            margin: 0 0 12px 0;
+            font-size: 1em;
+        }
+
+        .pros-box ul, .cons-box ul {
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .interactive-section {
+            background: var(--surface);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .highlight-sentence {
+            background: rgba(37, 99, 235, 0.1);
+            border-left: 3px solid var(--primary);
+            padding-left: 8px;
+            margin: 2px 0;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="home-link">← Back to Home</a>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="carousel-container">
+            <div class="carousel-wrapper" id="carouselWrapper">
+
+                <!-- Slide 1: Title -->
+                <div class="slide">
+                    <div class="slide-content title-slide">
+                        <h1>✂️ Text Chunking Strategies</h1>
+                        <p class="subtitle">Breaking Text into Meaningful Pieces</p>
+                        <div class="course-info">
+                            <p>
+                                Before we can search through text, we need to break it into manageable chunks.
+                                But how you chunk your text dramatically affects search quality. Choose the wrong
+                                strategy, and you'll lose critical context or fail to answer questions accurately.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: What is Chunking? -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>What is Text Chunking?</h2>
+                            <p class="slide-subtitle">The Foundation of Semantic Search</p>
+                        </div>
+
+                        <p>
+                            <strong>Text chunking</strong> is the process of dividing a large document into smaller,
+                            meaningful pieces. Each chunk becomes a searchable unit in your vector database.
+                        </p>
+
+                        <div class="example-box" style="margin-top: 24px;">
+                            <h3>Why Can't We Just Store Entire Documents?</h3>
+                            <p style="line-height: 1.8;">
+                                <strong>1. Context Window Limits:</strong> LLMs have token limits (e.g., 4K, 8K tokens)<br>
+                                <strong>2. Precision:</strong> Large documents contain many topics, making retrieval less accurate<br>
+                                <strong>3. Efficiency:</strong> Smaller chunks = faster search and lower costs<br>
+                                <strong>4. Relevance:</strong> You want the specific paragraph that answers a question, not a 50-page document
+                            </p>
+                        </div>
+
+                        <div class="formula-box" style="margin-top: 24px;">
+                            <strong>The Chunking Trade-off:</strong><br>
+                            • <strong>Too small:</strong> Lose context (e.g., character-level chunks)<br>
+                            • <strong>Too large:</strong> Noisy results, multiple topics mixed<br>
+                            • <strong>Just right:</strong> Preserves semantic coherence, focused retrieval
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Overview of Strategies -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>Six Chunking Strategies</h2>
+                            <p class="slide-subtitle">From Simple to State-of-the-Art</p>
+                        </div>
+
+                        <div class="strategy-grid">
+                            <div class="strategy-badge" style="border-color: #ef4444;">
+                                <div class="strategy-icon">📏</div>
+                                <div class="strategy-name">Fixed-Size</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #10b981;">
+                                <div class="strategy-icon">📝</div>
+                                <div class="strategy-name">Sentence-Based</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #2563eb;">
+                                <div class="strategy-icon">🪟</div>
+                                <div class="strategy-name">Sliding Window</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #8b5cf6;">
+                                <div class="strategy-icon">🧠</div>
+                                <div class="strategy-name">Semantic</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #f59e0b; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                                <div class="strategy-icon">🎯</div>
+                                <div class="strategy-name">Late Chunking</div>
+                            </div>
+                            <div class="strategy-badge" style="border-color: #6366f1; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);">
+                                <div class="strategy-icon">🌐</div>
+                                <div class="strategy-name">Contextual Embeddings</div>
+                            </div>
+                        </div>
+
+                        <table class="comparison-table" style="margin-top: 32px;">
+                            <thead>
+                                <tr>
+                                    <th>Strategy</th>
+                                    <th>How It Works</th>
+                                    <th>Best For</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Fixed-Size</strong></td>
+                                    <td>Split every N characters/tokens</td>
+                                    <td>Simple use cases, consistent sizing</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Sentence-Based</strong></td>
+                                    <td>Split at sentence boundaries</td>
+                                    <td>Natural language, Q&A systems</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Sliding Window</strong></td>
+                                    <td>Overlapping chunks with stride</td>
+                                    <td>Continuous narratives, preserving context</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Semantic</strong></td>
+                                    <td>AI-driven topic boundaries</td>
+                                    <td>Complex documents, topic-based retrieval</td>
+                                </tr>
+                                <tr style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                                    <td><strong>Late Chunking</strong></td>
+                                    <td>Embed full doc, then chunk tokens</td>
+                                    <td>Cross-references, pronoun resolution</td>
+                                </tr>
+                                <tr style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);">
+                                    <td><strong>Contextual Embeddings</strong></td>
+                                    <td>Model injects global context per chunk</td>
+                                    <td>Best quality + efficiency, production systems</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p style="margin-top: 20px; padding: 12px; background: #e0e7ff; border-left: 4px solid #6366f1; border-radius: 6px;">
+                            <strong>💡 Note:</strong> Late Chunking and Contextual Embeddings are <strong>advanced techniques</strong>
+                            that solve the context loss problem in traditional chunking. We'll explore them in detail after covering the basics.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Fixed-Size Chunking -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>📏 Fixed-Size Chunking</h2>
+                            <p class="slide-subtitle">Simple Character/Token Splits</p>
+                        </div>
+
+                        <p>
+                            The simplest approach: split text every N characters or tokens, regardless of content structure.
+                        </p>
+
+                        <div class="formula-box">
+                            <strong>Algorithm:</strong><br>
+                            1. Set chunk_size = 500 characters<br>
+                            2. Split text at every 500th character<br>
+                            3. Store each chunk independently
+                        </div>
+
+                        <div class="example-box">
+                            <h3>Example</h3>
+                            <p style="font-family: monospace; background: var(--bg); padding: 12px; border-radius: 6px; line-height: 1.6;">
+                                <span style="color: #ef4444;">Chunk 1 (0-200):</span> "Dr. Lakshmi Venkataraman arrived at the IIT Bombay AI lab early morning, her chai still warm in the cool Mumbai air. She had been working on the neural language model for eighteen months witho..."<br><br>
+                                <span style="color: #ef4444;">Chunk 2 (200-400):</span> "...ut a breakthrough. Today felt different. The training results from last night showed an unprecedented improvement in understanding regional languages..."
+                            </p>
+                        </div>
+
+                        <div class="pros-cons-grid">
+                            <div class="pros-box">
+                                <h4>✅ Advantages</h4>
+                                <ul>
+                                    <li>Extremely simple to implement</li>
+                                    <li>Predictable chunk sizes</li>
+                                    <li>Fast processing</li>
+                                </ul>
+                            </div>
+                            <div class="cons-box">
+                                <h4>❌ Disadvantages</h4>
+                                <ul>
+                                    <li>Breaks mid-sentence</li>
+                                    <li>Destroys semantic units</li>
+                                    <li>No respect for context</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Sentence-Based Chunking -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>📝 Sentence-Based Chunking</h2>
+                            <p class="slide-subtitle">Respecting Natural Boundaries</p>
+                        </div>
+
+                        <p>
+                            Split text at sentence boundaries, grouping sentences until reaching a target size.
+                            This preserves complete thoughts and grammatical units.
+                        </p>
+
+                        <div class="formula-box">
+                            <strong>Algorithm:</strong><br>
+                            1. Detect sentence boundaries (., !, ?)<br>
+                            2. Group 3-5 sentences per chunk<br>
+                            3. Ensure no sentence is split across chunks
+                        </div>
+
+                        <div class="example-box">
+                            <h3>Example</h3>
+                            <p style="background: var(--bg); padding: 12px; border-radius: 6px; line-height: 1.8;">
+                                <span style="display: block; padding: 8px; background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; margin: 4px 0;">
+                                    <strong style="color: #10b981;">Chunk 1:</strong> Dr. Lakshmi Venkataraman arrived at the IIT Bombay AI lab early morning, her chai still warm in the cool Mumbai air. She had been working on the neural language model for eighteen months without a breakthrough. Today felt different.
+                                </span>
+                                <span style="display: block; padding: 8px; background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; margin: 4px 0;">
+                                    <strong style="color: #10b981;">Chunk 2:</strong> The training results from last night showed an unprecedented improvement in understanding regional languages. The model was translating between Hindi, Tamil, and Bengali with accuracy far beyond Google's predictions. She quickly called her colleague, Dr. Pushpak Bhattacharyya, who specialized in natural language processing.
+                                </span>
+                            </p>
+                        </div>
+
+                        <div class="pros-cons-grid">
+                            <div class="pros-box">
+                                <h4>✅ Advantages</h4>
+                                <ul>
+                                    <li>Preserves complete thoughts</li>
+                                    <li>Natural reading experience</li>
+                                    <li>Good for Q&A systems</li>
+                                </ul>
+                            </div>
+                            <div class="cons-box">
+                                <h4>❌ Disadvantages</h4>
+                                <ul>
+                                    <li>Variable chunk sizes</li>
+                                    <li>May split related content</li>
+                                    <li>Sentence detection can fail</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Sliding Window Chunking -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>🪟 Sliding Window Chunking</h2>
+                            <p class="slide-subtitle">Overlapping Context Preservation</p>
+                        </div>
+
+                        <p>
+                            Create overlapping chunks by sliding a window across the text. This ensures that
+                            context at chunk boundaries isn't lost.
+                        </p>
+
+                        <div class="formula-box">
+                            <strong>Algorithm:</strong><br>
+                            1. Set window_size = 3 sentences<br>
+                            2. Set stride = 2 sentences (how far to move)<br>
+                            3. Create overlapping chunks with shared context
+                        </div>
+
+                        <div class="example-box">
+                            <h3>Example (Window=3, Stride=2)</h3>
+                            <p style="background: var(--bg); padding: 12px; border-radius: 6px; line-height: 1.8;">
+                                <span style="display: block; padding: 8px; background: rgba(37, 99, 235, 0.1); border-left: 3px solid #2563eb; margin: 4px 0;">
+                                    <strong style="color: #2563eb;">Chunk 1:</strong> [S1] Dr. Lakshmi arrived at the IIT Bombay AI lab. [S2] She had been working on the neural language model for eighteen months. <span class="text-highlight">[S3] Today felt different.</span>
+                                </span>
+                                <span style="display: block; padding: 8px; background: rgba(37, 99, 235, 0.15); border-left: 3px solid #2563eb; margin: 4px 0;">
+                                    <strong style="color: #2563eb;">Chunk 2:</strong> <span class="text-highlight">[S3] Today felt different.</span> [S4] The training results showed unprecedented improvement. [S5] The model was translating between regional languages.
+                                </span>
+                            </p>
+                            <p style="margin-top: 12px; color: var(--text-secondary); font-size: 0.9em;">
+                                Notice: S3 appears in both chunks, providing context continuity
+                            </p>
+                        </div>
+
+                        <div class="pros-cons-grid">
+                            <div class="pros-box">
+                                <h4>✅ Advantages</h4>
+                                <ul>
+                                    <li>Preserves boundary context</li>
+                                    <li>Reduces information loss</li>
+                                    <li>Better for narratives</li>
+                                </ul>
+                            </div>
+                            <div class="cons-box">
+                                <h4>❌ Disadvantages</h4>
+                                <ul>
+                                    <li>Increased storage (duplication)</li>
+                                    <li>More chunks to search</li>
+                                    <li>Redundant information</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Semantic Chunking -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>🧠 Semantic Chunking</h2>
+                            <p class="slide-subtitle">AI-Driven Topic Boundaries</p>
+                        </div>
+
+                        <p>
+                            Use embeddings or LLMs to identify topic boundaries and chunk where the subject matter changes.
+                            The most sophisticated approach, but requires computational resources.
+                        </p>
+
+                        <div class="formula-box">
+                            <strong>Algorithm:</strong><br>
+                            1. Generate embeddings for each sentence<br>
+                            2. Calculate similarity between adjacent sentences<br>
+                            3. Split where similarity drops (topic change detected)<br>
+                            4. Alternative: Use LLM to identify topic boundaries
+                        </div>
+
+                        <div class="example-box">
+                            <h3>Example</h3>
+                            <p style="background: var(--bg); padding: 12px; border-radius: 6px; line-height: 1.8;">
+                                <span style="display: block; padding: 8px; background: rgba(139, 92, 246, 0.1); border-left: 3px solid #8b5cf6; margin: 4px 0;">
+                                    <strong style="color: #8b5cf6;">Chunk 1 (Topic: Background):</strong> Dr. Lakshmi Venkataraman arrived at the IIT Bombay AI lab early morning. She had been working on the neural language model for eighteen months without a breakthrough. Today felt different.
+                                </span>
+                                <span style="display: block; padding: 8px; background: rgba(139, 92, 246, 0.1); border-left: 3px solid #8b5cf6; margin: 4px 0;">
+                                    <strong style="color: #8b5cf6;">Chunk 2 (Topic: Discovery):</strong> The training results from last night showed an unprecedented improvement in understanding regional languages. The model was translating between Hindi, Tamil, and Bengali with accuracy far beyond Google's predictions.
+                                </span>
+                                <span style="display: block; padding: 8px; background: rgba(139, 92, 246, 0.1); border-left: 3px solid #8b5cf6; margin: 4px 0;">
+                                    <strong style="color: #8b5cf6;">Chunk 3 (Topic: Validation):</strong> She quickly called her colleague, Dr. Pushpak Bhattacharyya. Together, they spent the entire afternoon analyzing the results, running validation tests, and checking for training errors.
+                                </span>
+                            </p>
+                        </div>
+
+                        <div class="pros-cons-grid">
+                            <div class="pros-box">
+                                <h4>✅ Advantages</h4>
+                                <ul>
+                                    <li>Respects topic boundaries</li>
+                                    <li>Most semantically coherent</li>
+                                    <li>Best retrieval quality</li>
+                                </ul>
+                            </div>
+                            <div class="cons-box">
+                                <h4>❌ Disadvantages</h4>
+                                <ul>
+                                    <li>Computationally expensive</li>
+                                    <li>Requires embeddings/LLM</li>
+                                    <li>Variable chunk sizes</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 8: Late Chunking -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>🎯 Advanced: Late Chunking</h2>
+                            <p class="slide-subtitle">Context-Preserving Embeddings (Jina AI)</p>
+                        </div>
+
+                        <p>
+                            <strong>Late Chunking</strong> solves a critical problem: traditional chunking creates
+                            <span class="text-highlight">independent embeddings that lose contextual references</span>
+                            between chunks.
+                        </p>
+
+                        <div class="example-box" style="background: #fee2e2; border-color: #dc2626;">
+                            <h3>❌ The Problem with Traditional "Naive" Chunking</h3>
+                            <p style="line-height: 1.8;">
+                                <strong>Document:</strong> "Berlin is the capital of Germany. The city has a population of 3.7 million."
+                            </p>
+                            <p style="margin-top: 12px; line-height: 1.8;">
+                                <strong>Chunk 1:</strong> "Berlin is the capital of Germany."<br>
+                                <strong>Chunk 2:</strong> "The city has a population of 3.7 million."
+                            </p>
+                            <p style="margin-top: 12px; color: var(--text-secondary);">
+                                ⚠️ Problem: "The city" in Chunk 2 has lost reference to "Berlin" from Chunk 1.<br>
+                                When embedded independently, the system doesn't know what "the city" refers to!
+                            </p>
+                        </div>
+
+                        <div class="formula-box" style="margin-top: 24px;">
+                            <strong style="font-size: 1.15em;">How Late Chunking Works:</strong><br><br>
+                            <div style="line-height: 2.2;">
+                                1️⃣ <strong>Embed the entire document first</strong> using transformer<br>
+                                &nbsp;&nbsp;&nbsp;→ Generate contextualized token vectors for ALL text<br><br>
+                                2️⃣ <strong>Then apply mean pooling per chunk</strong><br>
+                                &nbsp;&nbsp;&nbsp;→ Pool only the token vectors belonging to each chunk<br><br>
+                                3️⃣ <strong>Result: "Conditional" chunk embeddings</strong><br>
+                                &nbsp;&nbsp;&nbsp;→ Each chunk embedding contains global document context
+                            </div>
+                        </div>
+
+                        <div class="example-box" style="background: #e0e7ff; border-color: #6366f1; margin-top: 24px;">
+                            <h3>📐 Step-by-Step Example: Mean Pooling Per Chunk</h3>
+                            <p style="margin-bottom: 12px;"><strong>Document:</strong> "Berlin is the capital. The city has 3.7M people."</p>
+
+                            <div style="background: var(--bg); padding: 12px; border-radius: 6px; margin: 16px 0;">
+                                <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--primary);">Step 1: Embed Entire Document (Transformer processes all tokens)</p>
+                                <div style="font-family: monospace; font-size: 0.85em; line-height: 1.8;">
+                                    Token: "Berlin"    → Vector: [0.8, 0.2, -0.3, 0.5]  ← knows it's about Berlin<br>
+                                    Token: "is"        → Vector: [0.1, 0.4, 0.2, -0.1]<br>
+                                    Token: "the"       → Vector: [0.3, 0.5, 0.1, 0.2]<br>
+                                    Token: "capital"   → Vector: [0.7, 0.3, -0.2, 0.4]<br>
+                                    Token: "The"       → Vector: [0.6, 0.4, 0.1, 0.3]<br>
+                                    Token: "city"      → Vector: [<strong style="color: #059669;">0.75, 0.25, -0.25, 0.45</strong>]  ← <strong>contextualized with Berlin!</strong><br>
+                                    Token: "has"       → Vector: [0.2, 0.3, 0.1, 0.1]<br>
+                                    Token: "3.7M"      → Vector: [0.5, 0.6, -0.1, 0.3]<br>
+                                    Token: "people"    → Vector: [0.6, 0.4, 0.0, 0.4]
+                                </div>
+                                <p style="margin: 12px 0 0 0; color: var(--text-secondary); font-size: 0.9em;">
+                                    ✨ Notice: "city" vector is similar to "Berlin" because the transformer saw the entire context!
+                                </p>
+                            </div>
+
+                            <div style="background: var(--bg); padding: 12px; border-radius: 6px; margin: 16px 0;">
+                                <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--primary);">Step 2: Mean Pooling Per Chunk</p>
+                                <div style="font-family: monospace; font-size: 0.85em; line-height: 1.8;">
+                                    <strong style="color: #ef4444;">Chunk 1:</strong> "Berlin is the capital"<br>
+                                    &nbsp;&nbsp;Tokens: [Berlin, is, the, capital]<br>
+                                    &nbsp;&nbsp;Mean Pool = Average of 4 token vectors<br>
+                                    &nbsp;&nbsp;→ Chunk Embedding 1: [0.475, 0.35, -0.05, 0.25]<br><br>
+
+                                    <strong style="color: #10b981;">Chunk 2:</strong> "The city has 3.7M people"<br>
+                                    &nbsp;&nbsp;Tokens: [The, city, has, 3.7M, people]<br>
+                                    &nbsp;&nbsp;Mean Pool = Average of 5 token vectors<br>
+                                    &nbsp;&nbsp;→ Chunk Embedding 2: [0.49, 0.38, -0.05, 0.31]
+                                </div>
+                                <p style="margin: 12px 0 0 0; color: var(--text-secondary); font-size: 0.9em;">
+                                    🎯 Key Point: We pool tokens AFTER they've been contextualized by seeing the full document
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="example-box" style="background: #fef3c7; border-color: #f59e0b; margin-top: 24px;">
+                            <h3>🧠 What Are "Conditional" Chunk Embeddings?</h3>
+                            <p style="line-height: 1.8;">
+                                <strong>Conditional = Chunk embedding depends on (is conditioned by) the entire document context</strong>
+                            </p>
+                            <div style="background: var(--surface); padding: 12px; border-radius: 6px; margin: 12px 0; border-left: 4px solid #dc2626;">
+                                <p style="margin: 0; font-weight: 600; color: #dc2626;">❌ Naive Chunking (Independent)</p>
+                                <p style="margin: 8px 0 0 0; font-family: monospace; font-size: 0.9em;">
+                                    Chunk 2: "The city has 3.7M people"<br>
+                                    → "city" is embedded without knowing what city<br>
+                                    → Generic "city" vector: [0.3, 0.2, 0.1, 0.4]<br>
+                                    → Could mean ANY city (Paris, London, Tokyo...)
+                                </p>
+                            </div>
+                            <div style="background: var(--surface); padding: 12px; border-radius: 6px; margin: 12px 0; border-left: 4px solid #059669;">
+                                <p style="margin: 0; font-weight: 600; color: #059669;">✅ Late Chunking (Conditional)</p>
+                                <p style="margin: 8px 0 0 0; font-family: monospace; font-size: 0.9em;">
+                                    Full context: "Berlin is the capital. The city has 3.7M people"<br>
+                                    → "city" is embedded knowing it refers to Berlin<br>
+                                    → Contextualized "city" vector: [0.75, 0.25, -0.25, 0.45]<br>
+                                    → Similar to "Berlin" vector: [0.8, 0.2, -0.3, 0.5]<br>
+                                    → Specifically means Berlin!
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="example-box" style="background: #d1fae5; border-color: #059669; margin-top: 24px;">
+                            <h3>🎯 How It Improves Semantic Inference</h3>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 12px;">
+                                <tr style="background: var(--bg);">
+                                    <td style="padding: 10px; width: 40%;"><strong>Query</strong></td>
+                                    <td style="padding: 10px;"><strong>Naive Chunking</strong></td>
+                                    <td style="padding: 10px;"><strong>Late Chunking</strong></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; vertical-align: top;">"Berlin population"</td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ❌ Chunk 2 has "population" but doesn't know it's about Berlin<br>
+                                        Similarity: <strong style="color: #dc2626;">0.65</strong>
+                                    </td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ✅ Chunk 2 embedding includes Berlin context<br>
+                                        Similarity: <strong style="color: #059669;">0.89</strong>
+                                    </td>
+                                </tr>
+                                <tr style="background: var(--bg);">
+                                    <td style="padding: 10px; vertical-align: top;">"German capital residents"</td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ❌ "capital" in Chunk 1, "residents" in Chunk 2 - disconnected<br>
+                                        Similarity: <strong style="color: #dc2626;">0.54</strong>
+                                    </td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ✅ Both chunks know about Berlin being capital of Germany<br>
+                                        Similarity: <strong style="color: #059669;">0.82</strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; vertical-align: top;">"The city mentioned"</td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ❌ "the city" is generic, could be any city<br>
+                                        Similarity: <strong style="color: #dc2626;">0.42</strong>
+                                    </td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ✅ "the city" specifically refers to Berlin<br>
+                                        Similarity: <strong style="color: #059669;">0.83</strong>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin-top: 16px; padding: 12px; background: rgba(5, 150, 105, 0.1); border-radius: 6px;">
+                                <strong>💡 Key Insight:</strong> Late Chunking allows the model to understand pronouns,
+                                references, and cross-chunk relationships. Each chunk "knows" what the entire document is about,
+                                leading to much better retrieval for queries that involve contextual understanding.
+                            </p>
+                        </div>
+
+                        <div class="pros-cons-grid" style="margin-top: 24px;">
+                            <div class="pros-box">
+                                <h4>✅ Benefits</h4>
+                                <ul>
+                                    <li>Preserves pronoun references</li>
+                                    <li>Better for long documents</li>
+                                    <li>Higher retrieval accuracy</li>
+                                    <li>No preprocessing needed</li>
+                                </ul>
+                            </div>
+                            <div class="cons-box">
+                                <h4>⚠️ Considerations</h4>
+                                <ul>
+                                    <li>Requires long-context models</li>
+                                    <li>Higher computational cost</li>
+                                    <li>Document length limits apply</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 9: Contextual Chunk Embeddings -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>🌐 Advanced: Contextual Chunk Embeddings</h2>
+                            <p class="slide-subtitle">Global Context in Every Chunk (Voyage AI)</p>
+                        </div>
+
+                        <p>
+                            <strong>Contextual Chunk Embeddings</strong> (Voyage Context-3) takes a different approach:
+                            train a model that <span class="text-highlight">automatically injects global document context into each chunk embedding</span>.
+                        </p>
+
+                        <div class="example-box" style="background: #fef3c7; border-color: #f59e0b;">
+                            <h3>⚖️ The Context vs Detail Trade-off</h3>
+                            <p style="line-height: 1.8;">
+                                <strong>Traditional Approach:</strong><br>
+                                • Small chunks = High detail, Low context<br>
+                                • Large chunks = High context, Low detail<br>
+                                • You must choose one!
+                            </p>
+                            <p style="margin-top: 12px; line-height: 1.8;">
+                                <strong>Contextual Embeddings:</strong><br>
+                                • Get BOTH detail AND context in every chunk<br>
+                                • Model sees entire document, generates per-chunk embeddings
+                            </p>
+                        </div>
+
+                        <div class="formula-box" style="margin-top: 24px;">
+                            <strong style="font-size: 1.15em;">How Voyage Context-3 Works:</strong><br><br>
+                            <div style="line-height: 2.2;">
+                                1️⃣ <strong>Single-pass processing:</strong> Neural network processes entire document<br><br>
+                                2️⃣ <strong>Intelligent context injection:</strong> Model decides what global info to include<br>
+                                &nbsp;&nbsp;&nbsp;→ "Sees all chunks at the same time"<br>
+                                &nbsp;&nbsp;&nbsp;→ Injects relevant cross-chunk information<br><br>
+                                3️⃣ <strong>Dual training objective:</strong><br>
+                                &nbsp;&nbsp;&nbsp;→ Chunk-level relevance (fine-grained detail)<br>
+                                &nbsp;&nbsp;&nbsp;→ Document-level relevance (global context)<br><br>
+                                4️⃣ <strong>Output:</strong> Each chunk vector contains:<br>
+                                &nbsp;&nbsp;&nbsp;• Specific chunk information (detail)<br>
+                                &nbsp;&nbsp;&nbsp;• Coarse document-level context (global view)
+                            </div>
+                        </div>
+
+                        <div class="example-box" style="background: #e0e7ff; border-color: #6366f1; margin-top: 24px;">
+                            <h3>📐 Step-by-Step Example: Context Injection</h3>
+                            <p style="margin-bottom: 16px;">
+                                <strong>Legal Document:</strong> "Apple Inc. announced Q4 earnings of $89.5B. The company reported iPhone sales increased 12%. Apple's services division grew 16%."
+                            </p>
+
+                            <div style="background: var(--bg); padding: 12px; border-radius: 6px; margin: 16px 0;">
+                                <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--primary);">Traditional Chunking (No Context Injection)</p>
+                                <div style="font-family: monospace; font-size: 0.85em; line-height: 1.8;">
+                                    <strong style="color: #dc2626;">Chunk 1:</strong> "Apple Inc. announced Q4 earnings of $89.5B"<br>
+                                    → Embedding focuses on: <span style="color: #dc2626;">earnings, financial data</span><br>
+                                    → Vector: [0.6, 0.8, 0.1, -0.2, 0.3] <em>(financial-heavy)</em><br><br>
+
+                                    <strong style="color: #dc2626;">Chunk 2:</strong> "The company reported iPhone sales increased 12%"<br>
+                                    → Embedding focuses on: <span style="color: #dc2626;">generic company, sales increase</span><br>
+                                    → Vector: [0.4, 0.3, 0.5, 0.1, -0.1] <em>(product-focused)</em><br>
+                                    → ❌ Lost connection: Which company? What product line?<br><br>
+
+                                    <strong style="color: #dc2626;">Chunk 3:</strong> "Apple's services division grew 16%"<br>
+                                    → Embedding focuses on: <span style="color: #dc2626;">services, growth percentage</span><br>
+                                    → Vector: [0.3, 0.5, 0.7, 0.2, 0.0] <em>(services-focused)</em>
+                                </div>
+                                <p style="margin: 12px 0 0 0; color: var(--text-secondary); font-size: 0.9em;">
+                                    ⚠️ Problem: Each chunk knows its specific details but lacks overall context (Apple's Q4 earnings report)
+                                </p>
+                            </div>
+
+                            <div style="background: var(--bg); padding: 12px; border-radius: 6px; margin: 16px 0;">
+                                <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--primary);">Voyage Context-3 (With Context Injection)</p>
+                                <div style="font-family: monospace; font-size: 0.85em; line-height: 1.8;">
+                                    <strong style="color: #059669;">Chunk 1:</strong> "Apple Inc. announced Q4 earnings of $89.5B"<br>
+                                    → Chunk detail: <span style="color: #059669;">earnings, $89.5B</span><br>
+                                    → Injected context: <span style="background: #fef3c7; padding: 2px 4px; border-radius: 3px;">Apple, tech company, Q4 report, multi-segment (iPhone + services)</span><br>
+                                    → Vector: [<strong>0.65, 0.75, 0.3, 0.4, 0.5</strong>]<br>
+                                    &nbsp;&nbsp;↑ financial + Apple context + product diversity<br><br>
+
+                                    <strong style="color: #059669;">Chunk 2:</strong> "The company reported iPhone sales increased 12%"<br>
+                                    → Chunk detail: <span style="color: #059669;">iPhone, 12% increase</span><br>
+                                    → Injected context: <span style="background: #fef3c7; padding: 2px 4px; border-radius: 3px;">Apple Inc., Q4 earnings context, $89.5B total revenue</span><br>
+                                    → Vector: [<strong>0.62, 0.55, 0.6, 0.45, 0.4</strong>]<br>
+                                    &nbsp;&nbsp;↑ product detail + Apple identity + financial context<br><br>
+
+                                    <strong style="color: #059669;">Chunk 3:</strong> "Apple's services division grew 16%"<br>
+                                    → Chunk detail: <span style="color: #059669;">services, 16% growth</span><br>
+                                    → Injected context: <span style="background: #fef3c7; padding: 2px 4px; border-radius: 3px;">Apple Inc., Q4 earnings, companion to iPhone segment</span><br>
+                                    → Vector: [<strong>0.60, 0.65, 0.75, 0.5, 0.45</strong>]<br>
+                                    &nbsp;&nbsp;↑ services detail + Apple identity + earnings context
+                                </div>
+                                <p style="margin: 12px 0 0 0; color: var(--text-secondary); font-size: 0.9em;">
+                                    ✅ Result: All chunks maintain their specific details BUT also share Apple/Q4/earnings context
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="example-box" style="background: #fef3c7; border-color: #f59e0b; margin-top: 24px;">
+                            <h3>🎯 How Context Injection Works (Dual Training)</h3>
+                            <p style="line-height: 1.8; margin-bottom: 16px;">
+                                The model is trained with <strong>two objectives simultaneously</strong>, creating embeddings that excel at both:
+                            </p>
+
+                            <div style="background: var(--surface); padding: 12px; border-radius: 6px; margin: 12px 0; border-left: 4px solid #2563eb;">
+                                <p style="margin: 0; font-weight: 600; color: #2563eb;">🎯 Objective 1: Chunk-Level Relevance</p>
+                                <p style="margin: 8px 0 0 0; line-height: 1.6;">
+                                    <strong>Training Example:</strong><br>
+                                    Query: "iPhone sales growth"<br>
+                                    Positive: Chunk 2 ("The company reported iPhone sales increased 12%")<br>
+                                    → Model learns to encode <strong>specific details</strong> (iPhone, 12%, sales)
+                                </p>
+                            </div>
+
+                            <div style="background: var(--surface); padding: 12px; border-radius: 6px; margin: 12px 0; border-left: 4px solid #8b5cf6;">
+                                <p style="margin: 0; font-weight: 600; color: #8b5cf6;">🌐 Objective 2: Document-Level Relevance</p>
+                                <p style="margin: 8px 0 0 0; line-height: 1.6;">
+                                    <strong>Training Example:</strong><br>
+                                    Query: "Apple Q4 financial performance"<br>
+                                    Positive: ALL chunks (1, 2, 3 should match!)<br>
+                                    → Model learns to encode <strong>global context</strong> (Apple, Q4, earnings) in every chunk
+                                </p>
+                            </div>
+
+                            <p style="margin-top: 16px; padding: 12px; background: rgba(37, 99, 235, 0.1); border-radius: 6px; line-height: 1.6;">
+                                <strong>🧠 Key Mechanism:</strong> The neural network has attention layers that "look at" all chunks
+                                simultaneously. When embedding Chunk 2, the model sees Chunks 1 and 3, and intelligently decides:
+                                "Chunk 1 mentions Apple and Q4 earnings - I should inject that into Chunk 2's embedding!"
+                            </p>
+                        </div>
+
+                        <div class="example-box" style="background: #d1fae5; border-color: #059669; margin-top: 24px;">
+                            <h3>🔍 Query Performance Comparison</h3>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.9em;">
+                                <tr style="background: var(--bg);">
+                                    <td style="padding: 10px; width: 35%;"><strong>Query Type</strong></td>
+                                    <td style="padding: 10px;"><strong>Traditional Chunking</strong></td>
+                                    <td style="padding: 10px;"><strong>Voyage Context-3</strong></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        <strong>Specific Detail Query</strong><br>
+                                        <em style="font-size: 0.85em; color: var(--text-secondary);">"iPhone sales percentage"</em>
+                                    </td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ✅ <strong style="color: #059669;">Good</strong><br>
+                                        Finds Chunk 2<br>
+                                        Similarity: 0.82
+                                    </td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ✅ <strong style="color: #059669;">Excellent</strong><br>
+                                        Finds Chunk 2 with Apple context<br>
+                                        Similarity: 0.91 (+11%)
+                                    </td>
+                                </tr>
+                                <tr style="background: var(--bg);">
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        <strong>Cross-Chunk Query</strong><br>
+                                        <em style="font-size: 0.85em; color: var(--text-secondary);">"Apple's total Q4 revenue and product performance"</em>
+                                    </td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ❌ <strong style="color: #dc2626;">Poor</strong><br>
+                                        Finds Chunk 1 only<br>
+                                        Misses connection<br>
+                                        Similarity: 0.58
+                                    </td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ✅ <strong style="color: #059669;">Excellent</strong><br>
+                                        Finds ALL relevant chunks<br>
+                                        Understands relationship<br>
+                                        Similarity: 0.87 (+50%)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        <strong>Ambiguous Reference</strong><br>
+                                        <em style="font-size: 0.85em; color: var(--text-secondary);">"The company's services growth"</em>
+                                    </td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ❌ <strong style="color: #dc2626;">Poor</strong><br>
+                                        "company" is ambiguous<br>
+                                        Weak match<br>
+                                        Similarity: 0.47
+                                    </td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ✅ <strong style="color: #059669;">Excellent</strong><br>
+                                        Knows "company" = Apple<br>
+                                        Strong match<br>
+                                        Similarity: 0.84 (+79%)
+                                    </td>
+                                </tr>
+                                <tr style="background: var(--bg);">
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        <strong>High-Level Summary</strong><br>
+                                        <em style="font-size: 0.85em; color: var(--text-secondary);">"Apple Q4 financial overview"</em>
+                                    </td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ⚠️ <strong style="color: #f59e0b;">Partial</strong><br>
+                                        Finds Chunk 1<br>
+                                        Misses product segments<br>
+                                        Similarity: 0.73
+                                    </td>
+                                    <td style="padding: 10px; vertical-align: top;">
+                                        ✅ <strong style="color: #059669;">Excellent</strong><br>
+                                        Finds all chunks equally<br>
+                                        Complete picture<br>
+                                        Similarity: 0.93 (+27%)
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin-top: 16px; padding: 12px; background: rgba(5, 150, 105, 0.1); border-radius: 6px; line-height: 1.6;">
+                                <strong>💡 Key Insight:</strong> Voyage Context-3 excels at both <strong>specific queries</strong>
+                                (finding exact details) AND <strong>broad queries</strong> (understanding document-level context).
+                                This "best of both worlds" approach eliminates the traditional chunk size dilemma.
+                            </p>
+                        </div>
+
+                        <div class="example-box" style="background: #e0e7ff; border-color: #6366f1; margin-top: 24px;">
+                            <h3>📊 Real-World Performance</h3>
+                            <table style="width: 100%; font-size: 0.9em; margin-top: 12px;">
+                                <tr style="background: var(--bg);">
+                                    <td style="padding: 8px;"><strong>Comparison</strong></td>
+                                    <td style="padding: 8px;"><strong>Chunk-Level</strong></td>
+                                    <td style="padding: 8px;"><strong>Doc-Level</strong></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">vs OpenAI-v3-large</td>
+                                    <td style="padding: 8px; color: #059669; font-weight: 700;">+14.24% better</td>
+                                    <td style="padding: 8px; color: #059669; font-weight: 700;">+12.56% better</td>
+                                </tr>
+                                <tr style="background: var(--bg);">
+                                    <td style="padding: 8px;">vs Cohere-v4</td>
+                                    <td style="padding: 8px; color: #059669; font-weight: 700;">+7.89% better</td>
+                                    <td style="padding: 8px; color: #059669; font-weight: 700;">+5.64% better</td>
+                                </tr>
+                            </table>
+                            <p style="margin-top: 16px; padding: 12px; background: #d1fae5; border-radius: 6px; border-left: 4px solid #059669;">
+                                <strong>💰 Cost Savings:</strong> Voyage Context-3 (binary, 512-dim) outperforms
+                                OpenAI-v3-large (float, 3072-dim) while reducing vector storage costs by
+                                <strong>99.48%</strong>!
+                            </p>
+                        </div>
+
+                        <div class="pros-cons-grid" style="margin-top: 24px;">
+                            <div class="pros-box">
+                                <h4>✅ Benefits</h4>
+                                <ul>
+                                    <li>No manual metadata needed</li>
+                                    <li>Drop-in replacement</li>
+                                    <li>Works with any chunking</li>
+                                    <li>Superior cross-chunk reasoning</li>
+                                    <li>Massive cost reduction</li>
+                                </ul>
+                            </div>
+                            <div class="cons-box">
+                                <h4>📌 Best Use Cases</h4>
+                                <ul>
+                                    <li>Long, unstructured documents</li>
+                                    <li>Legal/medical/financial domains</li>
+                                    <li>Cross-reference heavy content</li>
+                                    <li>High-sensitivity retrieval</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 10: Interactive Demo -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>🔬 Interactive Demo</h2>
+                            <p class="slide-subtitle">See Chunking Strategies in Action</p>
+                        </div>
+
+                        <div class="interactive-section">
+                            <p style="text-align: center; margin-bottom: 16px;">
+                                <strong>Sample Story:</strong> "The AI Language Breakthrough"
+                            </p>
+
+                            <div class="story-container">
+                                <div class="story-text" id="storyText">
+                                    Dr. Lakshmi Venkataraman arrived at the IIT Bombay AI lab early morning, her chai still warm in the cool Mumbai air. She had been working on the neural language model for eighteen months without a breakthrough. Today felt different. The training results from last night showed an unprecedented improvement in understanding regional languages. The model was translating between Hindi, Tamil, and Bengali with accuracy far beyond Google's predictions. She quickly called her colleague, Dr. Pushpak Bhattacharyya, who specialized in natural language processing. He arrived within the hour, his excitement matching hers. Together, they spent the entire afternoon analyzing the results, running validation tests, and checking for training errors. By evening, they were certain: they had developed a breakthrough in multilingual AI. The implications were tremendous - this could help millions access information in their native languages. They immediately began drafting their paper for Nature Machine Intelligence.
+                                </div>
+                            </div>
+
+                            <div class="strategy-selector">
+                                <button class="strategy-btn active" onclick="showChunking('fixed')">📏 Fixed-Size</button>
+                                <button class="strategy-btn" onclick="showChunking('sentence')">📝 Sentence-Based</button>
+                                <button class="strategy-btn" onclick="showChunking('sliding')">🪟 Sliding Window</button>
+                                <button class="strategy-btn" onclick="showChunking('semantic')">🧠 Semantic</button>
+                            </div>
+
+                            <div class="chunk-visualization" id="chunkVisualization">
+                                <!-- Chunks will be rendered here by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 11: Question Answering Comparison -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>❓ Which Chunking Answers Questions Best?</h2>
+                            <p class="slide-subtitle">Comparing Retrieval Quality</p>
+                        </div>
+
+                        <p style="margin-bottom: 24px;">
+                            Let's see how different chunking strategies affect the ability to answer specific questions
+                            about "The AI Language Breakthrough" story.
+                        </p>
+
+                        <div class="question-card">
+                            <div class="question-text">
+                                <span class="question-icon">❓</span>
+                                Question 1: "How long had Dr. Lakshmi been working on the neural language model?"
+                            </div>
+                            <div class="answer-grid">
+                                <div class="answer-card poor">
+                                    <div class="answer-label" style="color: #dc2626;">📏 Fixed-Size: Poor</div>
+                                    <div class="answer-content">Chunk might cut off mid-sentence: "...for eighteen m..." Answer incomplete.</div>
+                                </div>
+                                <div class="answer-card good">
+                                    <div class="answer-label" style="color: #059669;">📝 Sentence-Based: Good</div>
+                                    <div class="answer-content">Full sentence captured: "She had been working...for eighteen months." ✓</div>
+                                </div>
+                                <div class="answer-card good">
+                                    <div class="answer-label" style="color: #059669;">🪟 Sliding Window: Good</div>
+                                    <div class="answer-content">Context preserved across overlapping chunks. ✓</div>
+                                </div>
+                                <div class="answer-card good">
+                                    <div class="answer-label" style="color: #059669;">🧠 Semantic: Excellent</div>
+                                    <div class="answer-content">Entire "background" topic in one chunk. ✓✓</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="question-card">
+                            <div class="question-text">
+                                <span class="question-icon">❓</span>
+                                Question 2: "What were the implications of the multilingual AI breakthrough?"
+                            </div>
+                            <div class="answer-grid">
+                                <div class="answer-card poor">
+                                    <div class="answer-label" style="color: #dc2626;">📏 Fixed-Size: Poor</div>
+                                    <div class="answer-content">"Implications" sentence likely in different chunk than discovery context.</div>
+                                </div>
+                                <div class="answer-card ok">
+                                    <div class="answer-label" style="color: #f59e0b;">📝 Sentence-Based: Okay</div>
+                                    <div class="answer-content">Might have implications sentence, but missing full context.</div>
+                                </div>
+                                <div class="answer-card good">
+                                    <div class="answer-label" style="color: #059669;">🪟 Sliding Window: Good</div>
+                                    <div class="answer-content">Overlap ensures both discovery and implications are together. ✓</div>
+                                </div>
+                                <div class="answer-card good">
+                                    <div class="answer-label" style="color: #059669;">🧠 Semantic: Excellent</div>
+                                    <div class="answer-content">All "implications" content in dedicated semantic chunk. ✓✓</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="question-card">
+                            <div class="question-text">
+                                <span class="question-icon">❓</span>
+                                Question 3: "Who helped validate the results?"
+                            </div>
+                            <div class="answer-grid">
+                                <div class="answer-card poor">
+                                    <div class="answer-label" style="color: #dc2626;">📏 Fixed-Size: Poor</div>
+                                    <div class="answer-content">Name might be in chunk 1, validation in chunk 2. Disconnected.</div>
+                                </div>
+                                <div class="answer-card good">
+                                    <div class="answer-label" style="color: #059669;">📝 Sentence-Based: Good</div>
+                                    <div class="answer-content">Sentences about Dr. Pushpak Bhattacharyya likely grouped together. ✓</div>
+                                </div>
+                                <div class="answer-card good">
+                                    <div class="answer-label" style="color: #059669;">🪟 Sliding Window: Excellent</div>
+                                    <div class="answer-content">Overlap ensures colleague introduction and validation are linked. ✓✓</div>
+                                </div>
+                                <div class="answer-card good">
+                                    <div class="answer-label" style="color: #059669;">🧠 Semantic: Excellent</div>
+                                    <div class="answer-content">Entire "validation" topic with all participants in one chunk. ✓✓</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 12: Key Takeaways -->
+                <div class="slide">
+                    <div class="slide-content">
+                        <div class="slide-header">
+                            <h2>📚 Key Takeaways</h2>
+                            <p class="slide-subtitle">Choosing Your Chunking Strategy</p>
+                        </div>
+
+                        <div class="example-box" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-color: var(--primary);">
+                            <h3 style="margin-top: 0;">🎯 Decision Guide</h3>
+                            <table style="width: 100%; line-height: 2;">
+                                <tr>
+                                    <td style="width: 30%; vertical-align: top;"><strong>Use Fixed-Size if:</strong></td>
+                                    <td>You need simple, fast processing and consistent sizes matter more than quality</td>
+                                </tr>
+                                <tr>
+                                    <td style="vertical-align: top;"><strong>Use Sentence-Based if:</strong></td>
+                                    <td>You have natural language text and want balance between simplicity and quality</td>
+                                </tr>
+                                <tr>
+                                    <td style="vertical-align: top;"><strong>Use Sliding Window if:</strong></td>
+                                    <td>Context preservation is critical and you can afford storage overhead</td>
+                                </tr>
+                                <tr>
+                                    <td style="vertical-align: top;"><strong>Use Semantic if:</strong></td>
+                                    <td>You have complex documents and need the highest retrieval quality</td>
+                                </tr>
+                                <tr style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                                    <td style="vertical-align: top;"><strong>Use Late Chunking if:</strong></td>
+                                    <td>You have long documents with cross-references, pronouns, and contextual dependencies</td>
+                                </tr>
+                                <tr style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);">
+                                    <td style="vertical-align: top;"><strong>Use Contextual Embeddings if:</strong></td>
+                                    <td>You need both fine-grained detail AND global context, with minimal overhead</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="example-box" style="background: #e0e7ff; border-color: #6366f1; margin-top: 24px;">
+                            <h3 style="margin-top: 0;">🚀 Advanced Techniques Summary</h3>
+                            <p style="line-height: 1.8; margin-bottom: 12px;">
+                                <strong>🎯 Late Chunking (Jina AI):</strong> Embed full document first, then chunk → Preserves references<br>
+                                <strong>🌐 Contextual Embeddings (Voyage):</strong> Train model to inject global context → Best of both worlds
+                            </p>
+                            <p style="color: var(--text-secondary); font-size: 0.95em;">
+                                Both techniques solve the context loss problem but use different approaches. Late Chunking is technique-based,
+                                while Contextual Embeddings require specialized models.
+                            </p>
+                        </div>
+
+                        <ul style="font-size: 1.125em; line-height: 2; margin-top: 32px;">
+                            <li><strong>Chunking strategy affects search quality</strong> - Not all strategies are equal</li>
+                            <li><strong>Context matters more than you think</strong> - Traditional chunking loses critical references</li>
+                            <li><strong>Consider your content type</strong> - Narratives vs technical docs need different approaches</li>
+                            <li><strong>Balance quality vs cost</strong> - Advanced techniques offer better quality with efficiency gains</li>
+                            <li><strong>Test with real queries</strong> - Measure retrieval quality on your specific use case</li>
+                        </ul>
+
+                        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 2px solid var(--primary); border-radius: 12px; padding: 24px; margin-top: 40px; text-align: center;">
+                            <h3 style="margin-top: 0; color: var(--text);">🚀 Interactive Demos</h3>
+                            <p style="margin-bottom: 20px; color: var(--text-secondary);">
+                                Experience the differences firsthand with our demos!
+                            </p>
+                            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                                <a href="/demo/chunking-strategies" style="text-decoration: none;">
+                                    <button class="action-btn" style="padding: 16px 32px; font-size: 1.125em; background: #6366f1;">
+                                        🎯 Strategy Comparison<br>
+                                        <span style="font-size: 0.8em; font-weight: 400;">Puducherry Example</span>
+                                    </button>
+                                </a>
+                                <a href="/demo/chunking" style="text-decoration: none;">
+                                    <button class="action-btn" style="padding: 16px 32px; font-size: 1.125em; background: var(--primary);">
+                                        🔬 Full Interactive Demo<br>
+                                        <span style="font-size: 0.8em; font-weight: 400;">Store & Query with Typesense</span>
+                                    </button>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 40px;">
+                            <a href="index.html" style="text-decoration: none;">
+                                <button class="action-btn" style="padding: 16px 32px; font-size: 1.125em;">
+                                    ← Back to Home
+                                </button>
+                            </a>
+                            <a href="embeddings.html" style="text-decoration: none; margin-left: 16px;">
+                                <button class="action-btn" style="padding: 16px 32px; font-size: 1.125em; background: var(--primary);">
+                                    Next: Embeddings →
+                                </button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Navigation Controls -->
+        <div class="carousel-nav">
+            <button id="prevBtn" onclick="prevSlide()">← Previous</button>
+
+            <div class="nav-center">
+                <div class="slide-indicators" id="slideIndicators"></div>
+                <span class="slide-counter">
+                    <span id="currentSlide">1</span> / <span id="totalSlides">12</span>
+                </span>
+            </div>
+
+            <button id="nextBtn" onclick="nextSlide()">Next →</button>
+        </div>
+    </div>
+
+    <div class="keyboard-hint" id="keyboardHint">
+        Use <kbd>←</kbd> <kbd>→</kbd> arrow keys to navigate
+    </div>
+
+    <script>
+        // Sample Story
+        const STORY = "Dr. Lakshmi Venkataraman arrived at the IIT Bombay AI lab early morning, her chai still warm in the cool Mumbai air. She had been working on the neural language model for eighteen months without a breakthrough. Today felt different. The training results from last night showed an unprecedented improvement in understanding regional languages. The model was translating between Hindi, Tamil, and Bengali with accuracy far beyond Google's predictions. She quickly called her colleague, Dr. Pushpak Bhattacharyya, who specialized in natural language processing. He arrived within the hour, his excitement matching hers. Together, they spent the entire afternoon analyzing the results, running validation tests, and checking for training errors. By evening, they were certain: they had developed a breakthrough in multilingual AI. The implications were tremendous - this could help millions access information in their native languages. They immediately began drafting their paper for Nature Machine Intelligence.";
+
+        // Split story into sentences (simple version)
+        const SENTENCES = STORY.match(/[^.!?]+[.!?]+/g).map(s => s.trim());
+
+        // Carousel State
+        let currentSlide = 0;
+        const totalSlides = 12;
+        const carouselWrapper = document.getElementById('carouselWrapper');
+        const progressFill = document.getElementById('progressFill');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        // Initialize carousel
+        function initCarousel() {
+            updateSlide();
+            createIndicators();
+            showChunking('fixed'); // Show initial chunking
+            setTimeout(() => {
+                document.getElementById('keyboardHint').style.animation = 'fadeInOut 3s ease-in-out';
+            }, 1000);
+        }
+
+        // Navigation Functions
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateSlide();
+        }
+
+        function updateSlide() {
+            const offset = -currentSlide * 100;
+            carouselWrapper.style.transform = `translateX(${offset}%)`;
+
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressFill.style.width = `${progress}%`;
+
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+
+            updateIndicators();
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('slideIndicators');
+            for (let i = 0; i < totalSlides; i++) {
+                const indicator = document.createElement('div');
+                indicator.className = 'slide-indicator';
+                indicator.onclick = () => goToSlide(i);
+                container.appendChild(indicator);
+            }
+            updateIndicators();
+        }
+
+        function updateIndicators() {
+            const indicators = document.querySelectorAll('.slide-indicator');
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // Chunking Functions
+        function showChunking(strategy) {
+            // Update active button
+            document.querySelectorAll('.strategy-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            let chunks = [];
+            let color = '';
+            let label = '';
+
+            switch(strategy) {
+                case 'fixed':
+                    chunks = getFixedSizeChunks();
+                    color = '#ef4444';
+                    label = 'Fixed-Size';
+                    break;
+                case 'sentence':
+                    chunks = getSentenceChunks();
+                    color = '#10b981';
+                    label = 'Sentence-Based';
+                    break;
+                case 'sliding':
+                    chunks = getSlidingWindowChunks();
+                    color = '#2563eb';
+                    label = 'Sliding Window';
+                    break;
+                case 'semantic':
+                    chunks = getSemanticChunks();
+                    color = '#8b5cf6';
+                    label = 'Semantic';
+                    break;
+            }
+
+            renderChunks(chunks, color, label);
+        }
+
+        function getFixedSizeChunks() {
+            const chunkSize = 200; // characters
+            const chunks = [];
+            for (let i = 0; i < STORY.length; i += chunkSize) {
+                chunks.push({
+                    content: STORY.slice(i, i + chunkSize) + (i + chunkSize < STORY.length ? '...' : ''),
+                    meta: `Characters: ${i}-${Math.min(i + chunkSize, STORY.length)}`
+                });
+            }
+            return chunks;
+        }
+
+        function getSentenceChunks() {
+            const chunks = [];
+            const sentencesPerChunk = 3;
+
+            for (let i = 0; i < SENTENCES.length; i += sentencesPerChunk) {
+                const chunkSentences = SENTENCES.slice(i, i + sentencesPerChunk);
+                chunks.push({
+                    content: chunkSentences.join(' '),
+                    meta: `Sentences: ${i + 1}-${Math.min(i + sentencesPerChunk, SENTENCES.length)}`
+                });
+            }
+            return chunks;
+        }
+
+        function getSlidingWindowChunks() {
+            const windowSize = 3; // sentences
+            const stride = 2; // sentences
+            const chunks = [];
+
+            for (let i = 0; i < SENTENCES.length; i += stride) {
+                const chunkSentences = SENTENCES.slice(i, i + windowSize);
+                if (chunkSentences.length > 0) {
+                    chunks.push({
+                        content: chunkSentences.join(' '),
+                        meta: `Window: Sentences ${i + 1}-${Math.min(i + windowSize, SENTENCES.length)} (stride=${stride})`
+                    });
+                }
+                if (i + windowSize >= SENTENCES.length) break;
+            }
+            return chunks;
+        }
+
+        function getSemanticChunks() {
+            // Simulated semantic chunking based on topic boundaries
+            // In real implementation, this would use embeddings
+            return [
+                {
+                    content: SENTENCES.slice(0, 3).join(' '),
+                    meta: 'Topic: Experiment Background & Setup'
+                },
+                {
+                    content: SENTENCES.slice(3, 5).join(' '),
+                    meta: 'Topic: Anomaly Discovery'
+                },
+                {
+                    content: SENTENCES.slice(5, 7).join(' '),
+                    meta: 'Topic: Colleague Collaboration'
+                },
+                {
+                    content: SENTENCES.slice(7, 9).join(' '),
+                    meta: 'Topic: Validation Process'
+                },
+                {
+                    content: SENTENCES.slice(9).join(' '),
+                    meta: 'Topic: Implications & Publication'
+                }
+            ];
+        }
+
+        function renderChunks(chunks, color, label) {
+            const container = document.getElementById('chunkVisualization');
+            container.innerHTML = '';
+
+            chunks.forEach((chunk, index) => {
+                const chunkDiv = document.createElement('div');
+                chunkDiv.className = 'chunk-item';
+                chunkDiv.style.borderLeftColor = color;
+                chunkDiv.style.backgroundColor = `${color}10`;
+
+                chunkDiv.innerHTML = `
+                    <div class="chunk-label" style="color: ${color};">
+                        ${label} - Chunk ${index + 1}
+                    </div>
+                    <div class="chunk-content">${chunk.content}</div>
+                    <div class="chunk-meta">${chunk.meta}</div>
+                `;
+
+                container.appendChild(chunkDiv);
+            });
+        }
+
+        // Initialize
+        initCarousel();
+    </script>
+</body>
+</html>
